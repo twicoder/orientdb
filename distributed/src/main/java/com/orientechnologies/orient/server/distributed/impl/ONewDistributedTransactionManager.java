@@ -61,16 +61,18 @@ public class ONewDistributedTransactionManager {
 
   private static final boolean                        SYNC_TX_COMPLETED = false;
   private              ONewDistributedResponseManager responseManager;
+  private OTransactionInternal transaction;
 
   public ONewDistributedTransactionManager(final ODistributedStorage storage, final ODistributedServerManager manager,
       final ODistributedDatabase iDDatabase) {
     this.dManager = manager;
     this.storage = storage;
     this.localDistributedDatabase = iDDatabase;
+    Thread thread = Thread.currentThread();
     if (DISTRIBUTED_THREAD_DUMP_ON_TOO_LONG_EXECUTION.getValueAsBoolean()) {
       Orient.instance().scheduleTask(()-> {
-        if(!responseManager.isFinished()) {
-          dunpOnError();
+        if(responseManager == null || !responseManager.isFinished()) {
+          OLogManager.instance().warn(this,"Transaction with %d records Thread %s, thread dump %s", this.transaction.getRecordOperations().size(), thread, Orient.instance().getProfiler().threadDump());
         }
       }, DISTRIBUTED_THREAD_DUMP_TOO_LONG_EXCUTION_TIMEOUT.getValueAsLong(), 0);
     }
@@ -78,6 +80,7 @@ public class ONewDistributedTransactionManager {
 
   public List<ORecordOperation> commit(final ODatabaseDocumentDistributed database, final OTransactionInternal iTx,
       final ODistributedStorageEventListener eventListener) {
+    this.transaction = iTx;
     int nretry = database.getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
     int delay = database.getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
     ODistributedDatabaseImpl distributedDatabase = (ODistributedDatabaseImpl) dManager.getMessageService()
@@ -122,7 +125,7 @@ public class ONewDistributedTransactionManager {
 
   private void dunpOnError() {
     if (DISTRIBUTED_THREAD_DUMP_ON_ERROR.getValueAsBoolean()) {
-      OLogManager.instance().warn(this, Orient.instance().getProfiler().threadDump());
+      OLogManager.instance().warn(this,"Transaction with %d records Thread %s, thread dump %s", this.transaction.getRecordOperations().size(), Thread.currentThread(), Orient.instance().getProfiler().threadDump());
     }
   }
 
