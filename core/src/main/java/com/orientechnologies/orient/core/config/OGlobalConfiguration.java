@@ -1104,7 +1104,11 @@ public enum OGlobalConfiguration {// ENVIRONMENT
   
   DISTRIBUTED_AUTO_CREATE_CLUSTERS("distributed.autoCreateClusters", "If true enable auto creation of cluster when a new node join", Boolean.class, true),
   
-  DISTRIBUTED_AUTO_SYNC("distributed.autoSync", "If true enable auto sync of nodes when they are detectd offline", Boolean.class, true);
+  DISTRIBUTED_AUTO_SYNC("distributed.autoSync", "If true enable auto sync of nodes when they are detectd offline", Boolean.class, true),
+  
+  DISTRIBUTED_THREAD_DUMP_ON_ERROR("distributed.threadDumpOnError", "If true enable thread dump in case of distributed transaction error", Boolean.class, false),
+  DISTRIBUTED_THREAD_DUMP_ON_TOO_LONG_EXECUTION("distributed.threadDumpOnTooLongExecution", "If true enable thread dump in case of distributed transaction error", Boolean.class, false),
+  DISTRIBUTED_THREAD_DUMP_TOO_LONG_EXCUTION_TIMEOUT("distributed.threadDumpTooLongExecutionTimeout", "If true enable thread dump in case of distributed transaction error", Long.class, 300000,false);
 
   static {
     readConfiguration();

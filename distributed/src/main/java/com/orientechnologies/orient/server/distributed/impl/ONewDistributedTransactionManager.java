@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -66,6 +67,13 @@ public class ONewDistributedTransactionManager {
     this.dManager = manager;
     this.storage = storage;
     this.localDistributedDatabase = iDDatabase;
+    if (DISTRIBUTED_THREAD_DUMP_ON_TOO_LONG_EXECUTION.getValueAsBoolean()) {
+      Orient.instance().scheduleTask(()-> {
+        if(!responseManager.isFinished()) {
+          dunpOnError();
+        }
+      }, DISTRIBUTED_THREAD_DUMP_TOO_LONG_EXCUTION_TIMEOUT.getValueAsLong(), 0);
+    }
   }
 
   public List<ORecordOperation> commit(final ODatabaseDocumentDistributed database, final OTransactionInternal iTx,
@@ -89,6 +97,7 @@ public class ONewDistributedTransactionManager {
           if (context != null) {
             context.destroy();
           }
+          dunpOnError();
           throw ex;
         }
         try {
@@ -102,12 +111,19 @@ public class ONewDistributedTransactionManager {
         if (context != null) {
           context.destroy();
         }
+        dunpOnError();
         throw ex;
       } finally {
         distributedDatabase.endOperation();
       }
       count++;
     } while (true);
+  }
+
+  private void dunpOnError() {
+    if (DISTRIBUTED_THREAD_DUMP_ON_ERROR.getValueAsBoolean()) {
+      OLogManager.instance().warn(this, Orient.instance().getProfiler().threadDump());
+    }
   }
 
   public List<ORecordOperation> retriedCommit(final ODatabaseDocumentDistributed database, final OTransactionInternal iTx,
