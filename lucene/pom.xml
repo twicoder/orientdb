@@ -50,6 +50,7 @@
             -Dstorage.diskCache.checksumMode=storeAndThrow
             -Dindex.allowManualIndexes=false
             -Dsecurity.warningDefaultUsers=false
+            -Dsecurity.createDefaultUsers=true
         </argLine>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
