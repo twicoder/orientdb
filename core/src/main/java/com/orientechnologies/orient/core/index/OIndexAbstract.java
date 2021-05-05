@@ -814,7 +814,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
    */
   public Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
       OTransactionIndexChangesPerKey changes) {
-    return changes.entries;
+    return changes.entries.values();
   }
 
   private void applyIndexTxEntry(

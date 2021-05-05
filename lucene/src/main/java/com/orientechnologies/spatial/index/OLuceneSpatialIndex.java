@@ -74,7 +74,7 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
             if (((OLuceneSpatialIndexContainer) engine).isLegacy()) {
               return OLuceneSpatialIndex.super.interpretTxKeyChanges(changes);
             } else {
-              return interpretAsSpatial(changes.entries);
+              return interpretAsSpatial(new ArrayList<>(changes.entries.values()));
             }
           });
     } catch (OInvalidIndexEngineIdException e) {

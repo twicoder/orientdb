@@ -486,7 +486,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
       }
     }
 
-    for (OTransactionIndexEntry entry : changesPerKey.entries) {
+    for (OTransactionIndexEntry entry : changesPerKey.entries.values()) {
       if (entry.operation == OPERATION.REMOVE) result = null;
       else if (entry.operation == OPERATION.PUT) result = entry.value.getIdentity();
     }

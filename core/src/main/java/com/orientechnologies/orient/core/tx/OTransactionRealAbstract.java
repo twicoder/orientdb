@@ -427,7 +427,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
 
     // SERIALIZE VALUES
     if (entry.entries != null && !entry.entries.isEmpty()) {
-      for (OTransactionIndexEntry e : entry.entries) {
+      for (OTransactionIndexEntry e : entry.entries.values()) {
 
         final ODocument changeDoc = new ODocument().setAllowChainedAccess(false);
         ODocumentInternal.addOwner((ODocument) changeDoc, indexDoc);
@@ -458,7 +458,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
       ORID oldRid, ORID newRid, OTransactionIndexChangesPerKey changesPerKey) {
     if (changesPerKey == null) return;
 
-    for (final OTransactionIndexEntry indexEntry : changesPerKey.entries)
+    for (final OTransactionIndexEntry indexEntry : changesPerKey.entries.values())
       if (indexEntry.value.getIdentity().equals(oldRid)) indexEntry.value = newRid;
   }
 

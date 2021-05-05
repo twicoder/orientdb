@@ -19,14 +19,12 @@
 
 package com.orientechnologies.orient.core.tx;
 
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.Interpretation;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.junit.Assert;
@@ -165,24 +163,32 @@ public class IndexChangesInterpretationTest {
       parseOutput(vector[2], expectedDictionary);
       parseOutput(vector[3], expectedNonUnique);
 
-      verify(expectedUnique, changes.interpret(Interpretation.Unique), "unique", changes.entries);
+      verify(
+          expectedUnique,
+          changes.interpret(Interpretation.Unique),
+          "unique",
+          changes.entries.values());
       verify(
           expectedDictionary,
           changes.interpret(Interpretation.Dictionary),
           "dictionary",
-          changes.entries);
+          changes.entries.values());
       verify(
           expectedNonUnique,
           changes.interpret(Interpretation.NonUnique),
           "non-unique",
-          changes.entries);
+          changes.entries.values());
     }
   }
 
-  private void parseInput(String text, Collection<OTransactionIndexEntry> result) {
+  private void parseInput(String text, Map<OPair<Comparable, OPERATION>, OTransactionIndexEntry> result) {
     result.clear();
     final Matcher matcher = INPUT_GRAMMAR.matcher(text);
-    while (matcher.find()) result.add(parseChange(matcher.group(1)));
+
+    while (matcher.find()) {
+      OTransactionIndexEntry entry = parseChange(matcher.group(1));
+      result.put(new OPair<>(entry.value, entry.operation), entry);
+    }
   }
 
   private void parseOutputItems(String text, Collection<OTransactionIndexEntry> result) {

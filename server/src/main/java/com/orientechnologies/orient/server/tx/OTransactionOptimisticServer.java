@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.tx;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.remote.message.tx.IndexChange;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
@@ -204,10 +205,11 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
           }
           OTransactionIndexChangesPerKey singleChange = new OTransactionIndexChangesPerKey(key);
           for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry :
-              keyChange.getValue().entries) {
+              keyChange.getValue().entries.values()) {
             OIdentifiable rec = entry.value;
             if (rec != null && !rec.getIdentity().isPersistent()) rec = rec.getRecord();
-            singleChange.entries.add(
+            singleChange.entries.put(
+                new OPair<>(rec, entry.operation),
                 new OTransactionIndexChangesPerKey.OTransactionIndexEntry(rec, entry.operation));
           }
           changesPerKey.put(key, singleChange);
@@ -217,10 +219,11 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
         if (change.getKeyChanges().nullKeyChanges != null) {
           OTransactionIndexChangesPerKey singleChange = new OTransactionIndexChangesPerKey(null);
           for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry :
-              change.getKeyChanges().nullKeyChanges.entries) {
+              change.getKeyChanges().nullKeyChanges.entries.values()) {
             OIdentifiable rec = entry.value;
             if (rec != null && !rec.getIdentity().isPersistent()) rec = rec.getRecord();
-            singleChange.entries.add(
+            singleChange.entries.put(
+                    new OPair<>(rec, entry.operation),
                 new OTransactionIndexChangesPerKey.OTransactionIndexEntry(rec, entry.operation));
           }
           change.getKeyChanges().nullKeyChanges = singleChange;

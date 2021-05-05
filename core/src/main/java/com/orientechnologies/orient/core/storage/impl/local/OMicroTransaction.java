@@ -617,7 +617,7 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
     if (changesPerKey == null) return;
 
     for (final OTransactionIndexChangesPerKey.OTransactionIndexEntry indexEntry :
-        changesPerKey.entries)
+        changesPerKey.entries.values())
       if (indexEntry.value.getIdentity().equals(oldRid)) indexEntry.value = newRid;
   }
 

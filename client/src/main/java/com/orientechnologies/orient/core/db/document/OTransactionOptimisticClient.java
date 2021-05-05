@@ -89,7 +89,7 @@ public class OTransactionOptimisticClient extends OTransactionOptimistic {
         if (key instanceof OIdentifiable && ((OIdentifiable) key).getIdentity().isNew())
           key = ((OIdentifiable) key).getRecord();
         OTransactionIndexChangesPerKey singleChange = new OTransactionIndexChangesPerKey(key);
-        singleChange.entries.addAll(keyChange.getValue().entries);
+        singleChange.entries.putAll(keyChange.getValue().entries);
         changesPerKey.put(key, singleChange);
       }
       change.getKeyChanges().changesPerKey = changesPerKey;

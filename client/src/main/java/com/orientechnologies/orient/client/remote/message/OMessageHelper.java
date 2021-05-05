@@ -315,7 +315,7 @@ public class OMessageHelper {
         network.writeByte((byte) -1);
         network.writeInt(indexChange.getKeyChanges().nullKeyChanges.entries.size());
         for (OTransactionIndexChangesPerKey.OTransactionIndexEntry perKeyChange :
-            indexChange.getKeyChanges().nullKeyChanges.entries) {
+            indexChange.getKeyChanges().nullKeyChanges.entries.values()) {
           network.writeInt(perKeyChange.operation.ordinal());
           network.writeRID(perKeyChange.value.getIdentity());
         }
@@ -327,7 +327,8 @@ public class OMessageHelper {
         network.writeByte((byte) type.getId());
         network.writeBytes(value);
         network.writeInt(change.entries.size());
-        for (OTransactionIndexChangesPerKey.OTransactionIndexEntry perKeyChange : change.entries) {
+        for (OTransactionIndexChangesPerKey.OTransactionIndexEntry perKeyChange :
+            change.entries.values()) {
           OTransactionIndexChanges.OPERATION op = perKeyChange.operation;
           if (op == OTransactionIndexChanges.OPERATION.REMOVE && perKeyChange.value == null)
             op = OTransactionIndexChanges.OPERATION.CLEAR;

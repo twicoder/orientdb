@@ -533,7 +533,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
     }
 
     int putCounter = 1;
-    for (OTransactionIndexEntry entry : changesPerKey.entries) {
+    for (OTransactionIndexEntry entry : changesPerKey.entries.values()) {
       if (entry.operation == OPERATION.PUT && entry.value.equals(backendValue)) putCounter++;
       else if (entry.operation == OPERATION.REMOVE) {
         if (entry.value == null) putCounter = 0;
@@ -556,7 +556,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       return null;
     }
 
-    for (OTransactionIndexEntry entry : changesPerKey.entries) {
+    for (OTransactionIndexEntry entry : changesPerKey.entries.values()) {
       if (entry.operation == OPERATION.REMOVE) {
         if (entry.value == null) result.clear();
         else result.remove(entry.value);

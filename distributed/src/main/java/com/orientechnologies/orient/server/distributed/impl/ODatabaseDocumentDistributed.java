@@ -812,11 +812,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           try (Stream<ORID> stream = index.getInternal().getRids(null)) {
             old = stream.findFirst().orElse(null);
           }
-          Object newValue = nullKeyChanges.entries.get(nullKeyChanges.entries.size() - 1).value;
+          OTransactionIndexChangesPerKey.OTransactionIndexEntry lastEntry =
+              lastValue(nullKeyChanges.entries);
+          Object newValue = lastEntry.value;
           if (old != null && !old.equals(newValue)) {
             boolean oldValueRemoved = false;
             for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry :
-                nullKeyChanges.entries) {
+                nullKeyChanges.entries.values()) {
               if (entry.value != null
                   && entry.value.equals(old)
                   && entry.operation == OTransactionIndexChanges.OPERATION.REMOVE) {
@@ -843,11 +845,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             old = rids.findFirst().orElse(null);
           }
           if (!changesPerKey.entries.isEmpty()) {
-            Object newValue = changesPerKey.entries.get(changesPerKey.entries.size() - 1).value;
+            OTransactionIndexChangesPerKey.OTransactionIndexEntry lastEntry =
+                lastValue(changesPerKey.entries);
+            Object newValue = lastEntry.value;
             if (old != null && !old.equals(newValue)) {
               boolean oldValueRemoved = false;
               for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry :
-                  changesPerKey.entries) {
+                  changesPerKey.entries.values()) {
                 if (entry.value != null
                     && entry.value.equals(old)
                     && entry.operation == OTransactionIndexChanges.OPERATION.REMOVE) {
@@ -904,6 +908,17 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         .getLocalDistributedDatabase()
         .getManager()
         .messageAfterOp("mvccCheck", txContext.getReqId());
+  }
+
+  private OTransactionIndexChangesPerKey.OTransactionIndexEntry lastValue(
+      LinkedHashMap<Object, OTransactionIndexChangesPerKey.OTransactionIndexEntry> entries) {
+    Iterator<OTransactionIndexChangesPerKey.OTransactionIndexEntry> iterator =
+        entries.values().iterator();
+    OTransactionIndexChangesPerKey.OTransactionIndexEntry result = null;
+    while (iterator.hasNext()) {
+      result = iterator.next();
+    }
+    return result;
   }
 
   @Override
