@@ -29,8 +29,8 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.IndexInternal;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -58,7 +58,6 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
   private final ODatabaseDocumentInternal databaseOne;
   private final ODatabaseDocumentInternal databaseTwo;
 
-  private boolean compareEntriesForAutomaticIndexes = false;
   private boolean autoDetectExportImportMap = true;
 
   private int differences = 0;
@@ -508,11 +507,11 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       }
 
       final long indexOneSize =
-          makeDbCall(databaseOne, database -> ((OIndexInternal) indexOne).size());
+          makeDbCall(databaseOne, database -> ((IndexInternal) indexOne).size());
 
       @SuppressWarnings("ObjectAllocationInLoop")
       final long indexTwoSize =
-          makeDbCall(databaseTwo, database -> ((OIndexInternal) indexTwo).size());
+          makeDbCall(databaseTwo, database -> ((IndexInternal) indexTwo).size());
 
       if (indexOneSize != indexTwoSize) {
         ok = false;
@@ -566,33 +565,6 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
               });
           listener.onMessage("\n");
           ++differences;
-        }
-      }
-
-      if (((compareEntriesForAutomaticIndexes && !indexOne.getType().equals("DICTIONARY"))
-          || !indexOne.isAutomatic())) {
-
-        //noinspection resource
-        try (final Stream<Object> keyStream =
-            makeDbCall(databaseOne, database -> ((OIndexInternal) indexOne).keyStream())) {
-          final Iterator<Object> indexKeyIteratorOne =
-              makeDbCall(databaseOne, database -> keyStream.iterator());
-          while (makeDbCall(databaseOne, database -> indexKeyIteratorOne.hasNext())) {
-            final Object indexKey = makeDbCall(databaseOne, database -> indexKeyIteratorOne.next());
-
-            //noinspection resource
-            try (Stream<ORID> indexOneStream =
-                makeDbCall(databaseOne, database -> indexOne.getInternal().getRids(indexKey))) {
-              //noinspection resource
-              try (Stream<ORID> indexTwoValue =
-                  makeDbCall(databaseTwo, database -> indexTwo.getInternal().getRids(indexKey))) {
-                differences =
-                    compareIndexStreams(
-                        indexKey, indexOneStream, indexTwoValue, ridMapper, listener);
-              }
-            }
-            ok = ok && differences > 0;
-          }
         }
       }
     }
@@ -1097,14 +1069,6 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
   public void setCompareIndexMetadata(boolean compareIndexMetadata) {
     this.compareIndexMetadata = compareIndexMetadata;
-  }
-
-  public boolean isCompareEntriesForAutomaticIndexes() {
-    return compareEntriesForAutomaticIndexes;
-  }
-
-  public void setCompareEntriesForAutomaticIndexes(boolean compareEntriesForAutomaticIndexes) {
-    this.compareEntriesForAutomaticIndexes = compareEntriesForAutomaticIndexes;
   }
 
   public void setAutoDetectExportImportMap(boolean autoDetectExportImportMap) {

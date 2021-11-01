@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexTxAwareMultiValue;
+import com.orientechnologies.orient.core.index.OIndexTxAwareMultiValueOriginal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -52,7 +52,7 @@ public class IndexChangesQueryTest {
 
     final OIndex index =
         database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
-    Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
+    Assert.assertTrue(index instanceof OIndexTxAwareMultiValueOriginal);
 
     ODocument doc = new ODocument(CLASS_NAME);
     doc.field(FIELD_NAME, 1);
@@ -97,7 +97,7 @@ public class IndexChangesQueryTest {
 
     final OIndex index =
         database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
-    Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
+    Assert.assertTrue(index instanceof OIndexTxAwareMultiValueOriginal);
 
     database.commit();
 

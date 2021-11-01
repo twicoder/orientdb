@@ -13,7 +13,7 @@ import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.IndexInternal;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -385,7 +385,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
         .getIndexOperations()
         .forEach(
             (index, changes) -> {
-              OIndexInternal resolvedIndex =
+              IndexInternal resolvedIndex =
                   changes.resolveAssociatedIndex(
                       index, database.getMetadata().getIndexManagerInternal(), database);
               if (resolvedIndex != null && resolvedIndex.isUnique()) {

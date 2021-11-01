@@ -15,8 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.common.util.ORawPair;
-import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.IndexInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -27,10 +26,8 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -77,14 +74,9 @@ public class TruncateClassTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(index.getInternal().size(), 6);
 
-    Iterator<ORawPair<Object, ORID>> indexIterator;
-    try (Stream<ORawPair<Object, ORID>> stream = index.getInternal().stream()) {
-      indexIterator = stream.iterator();
-
-      while (indexIterator.hasNext()) {
-        ORawPair<Object, ORID> entry = indexIterator.next();
-        Assert.assertTrue(set.contains((Integer) entry.first));
-      }
+    final IndexInternal indexInternal = index.getInternal();
+    for (Integer key : set) {
+      Assert.assertTrue(indexInternal.getRids(key).findAny().isPresent());
     }
 
     schema.dropClass("test_class");

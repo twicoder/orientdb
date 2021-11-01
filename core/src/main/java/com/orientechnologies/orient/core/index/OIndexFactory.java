@@ -43,7 +43,7 @@ public interface OIndexFactory {
    * @return OIndexInternal
    * @throws OConfigurationException if index creation failed
    */
-  OIndexInternal createIndex(
+  IndexInternal createIndex(
       String name,
       OStorage storage,
       String indexType,

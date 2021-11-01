@@ -23,12 +23,9 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
@@ -67,7 +64,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
       OCommandContext iContext, OIndex index, List<Object> keyParams, boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
-    final OIndexInternal internalIndex = index.getInternal();
+    final IndexInternal internalIndex = index.getInternal();
     Stream<ORawPair<Object, ORID>> stream;
     if (!internalIndex.canBeUsedInEqualityOperators()) return null;
 
@@ -117,7 +114,11 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
       }
       if (containsNotCompatibleKey) return null;
 
-      stream = index.getInternal().streamEntries(inKeys, ascSortOrder);
+      if (internalIndex instanceof IndexInternalBinaryKey) {
+        throw new OCommandExecutionException("Binary indexes are not supported by old executor");
+      }
+
+      stream = ((IndexInternalOriginalKey) internalIndex).streamEntries(inKeys, ascSortOrder);
     } else {
       final List<Object> partialKey = new ArrayList<Object>();
       partialKey.addAll(keyParams);
@@ -157,7 +158,10 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
       if (inKeys == null) return null;
 
       if (indexDefinition.getParamCount() == keyParams.size()) {
-        stream = index.getInternal().streamEntries(inKeys, ascSortOrder);
+        if (internalIndex instanceof IndexInternalBinaryKey) {
+          throw new OCommandExecutionException("Binary indexes are not supported by old executor");
+        }
+        stream = ((IndexInternalOriginalKey) internalIndex).streamEntries(inKeys, ascSortOrder);
       } else {
         return null;
       }

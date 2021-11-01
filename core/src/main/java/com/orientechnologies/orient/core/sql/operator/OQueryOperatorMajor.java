@@ -24,13 +24,10 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
@@ -81,7 +78,7 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     Stream<ORawPair<Object, ORID>> stream;
-    final OIndexInternal internalIndex = index.getInternal();
+    final IndexInternal internalIndex = index.getInternal();
     if (!internalIndex.canBeUsedInEqualityOperators() || !internalIndex.hasRangeQuerySupport())
       return null;
 
@@ -93,7 +90,11 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
 
       if (key == null) return null;
 
-      stream = index.getInternal().streamEntriesMajor(key, false, ascSortOrder);
+      if (internalIndex instanceof IndexInternalBinaryKey) {
+        throw new OCommandExecutionException("Binary indexes are not supported by old executor");
+      }
+      stream =
+          ((IndexInternalOriginalKey) internalIndex).streamEntriesMajor(key, false, ascSortOrder);
     } else {
       // if we have situation like "field1 = 1 AND field2 > 2"
       // then we fetch collection which left not included boundary is the smallest composite key in
@@ -114,7 +115,12 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
 
       if (keyTwo == null) return null;
 
-      stream = index.getInternal().streamEntriesBetween(keyOne, false, keyTwo, true, ascSortOrder);
+      if (internalIndex instanceof IndexInternalBinaryKey) {
+        throw new OCommandExecutionException("Binary indexes are not supported by old executor");
+      }
+      stream =
+          ((IndexInternalOriginalKey) internalIndex)
+              .streamEntriesBetween(keyOne, false, keyTwo, true, ascSortOrder);
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);

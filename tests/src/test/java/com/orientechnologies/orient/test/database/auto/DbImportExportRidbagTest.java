@@ -118,7 +118,6 @@ public class DbImportExportRidbagTest extends DocumentDBBaseTest implements OCom
             "admin",
             "admin",
             this);
-    databaseCompare.setCompareEntriesForAutomaticIndexes(true);
     databaseCompare.setCompareIndexMetadata(true);
     Assert.assertTrue(databaseCompare.compare());
   }

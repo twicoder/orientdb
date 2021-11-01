@@ -109,7 +109,6 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
             "admin",
             "admin",
             this);
-    databaseCompare.setCompareEntriesForAutomaticIndexes(true);
     databaseCompare.setCompareIndexMetadata(true);
 
     Assert.assertTrue(databaseCompare.compare());

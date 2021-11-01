@@ -3,8 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexAbstract;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.sql.parser.OAndBlock;
 import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
 import com.orientechnologies.orient.core.sql.parser.ODeleteStatement;
@@ -47,14 +46,13 @@ public class ODeleteExecutionPlanner {
         throw new OCommandExecutionException("Cannot apply a RETURN BEFORE on a delete from index");
       }
 
-      handleReturn(result, ctx, this.returnBefore, enableProfiling);
     } else {
       handleTarget(result, ctx, this.fromClause, this.whereClause, enableProfiling);
       handleUnsafe(result, ctx, this.unsafe, enableProfiling);
       handleLimit(result, ctx, this.limit, enableProfiling);
       handleDelete(result, ctx, enableProfiling);
-      handleReturn(result, ctx, this.returnBefore, enableProfiling);
     }
+    handleReturn(result, ctx, this.returnBefore, enableProfiling);
     return result;
   }
 
@@ -75,6 +73,7 @@ public class ODeleteExecutionPlanner {
     }
     List<OAndBlock> flattenedWhereClause = whereClause == null ? null : whereClause.flatten();
 
+    final IndexInternal indexInternal = index.getInternal();
     switch (indexIdentifier.getType()) {
       case INDEX:
         OIndexAbstract.manualIndexesWarning();
@@ -95,7 +94,6 @@ public class ODeleteExecutionPlanner {
 
             whereClause =
                 null; // The WHERE clause won't be used anymore, the index does all the filtering
-            flattenedWhereClause = null;
             keyCondition = getKeyCondition(andBlock);
             if (keyCondition == null) {
               throw new OCommandExecutionException(
@@ -105,7 +103,6 @@ public class ODeleteExecutionPlanner {
           } else if (andBlock.getSubBlocks().size() == 2) {
             whereClause =
                 null; // The WHERE clause won't be used anymore, the index does all the filtering
-            flattenedWhereClause = null;
             keyCondition = getKeyCondition(andBlock);
             ridCondition = getRidCondition(andBlock);
             if (keyCondition == null || ridCondition == null) {
@@ -118,9 +115,26 @@ public class ODeleteExecutionPlanner {
                 "Index queries with this kind of condition are not supported yet: " + whereClause);
           }
         }
-        result.chain(
-            new DeleteFromIndexStep(
-                index, keyCondition, null, ridCondition, ctx, profilingEnabled));
+
+        if (indexInternal instanceof IndexInternalOriginalKey) {
+          result.chain(
+              new DeleteFromIndexStep(
+                  (IndexInternalOriginalKey) indexInternal,
+                  keyCondition,
+                  null,
+                  ridCondition,
+                  ctx,
+                  profilingEnabled));
+        } else {
+          result.chain(
+              new DeleteFromBinaryIndexStep(
+                  (IndexInternalBinaryKey) indexInternal,
+                  keyCondition,
+                  null,
+                  ridCondition,
+                  ctx,
+                  profilingEnabled));
+        }
         if (ridCondition != null) {
           OWhereClause where = new OWhereClause(-1);
           where.setBaseExpression(ridCondition);
@@ -133,7 +147,16 @@ public class ODeleteExecutionPlanner {
           throw new OCommandExecutionException(
               "Index " + indexName + " does not allow iteration on values");
         }
-        result.chain(new FetchFromIndexValuesStep(index, true, ctx, profilingEnabled));
+        if (indexInternal instanceof IndexInternalOriginalKey) {
+          result.chain(
+              new FetchFromIndexValuesStep(
+                  (IndexInternalOriginalKey) indexInternal, true, ctx, profilingEnabled));
+        } else {
+          result.chain(
+              new FetchFromBinaryIndexValuesStep(
+                  (IndexInternalBinaryKey) indexInternal, true, ctx, profilingEnabled));
+        }
+
         result.chain(new GetValueFromIndexEntryStep(ctx, null, profilingEnabled));
         break;
       case VALUESDESC:
@@ -141,7 +164,16 @@ public class ODeleteExecutionPlanner {
           throw new OCommandExecutionException(
               "Index " + indexName + " does not allow iteration on values");
         }
-        result.chain(new FetchFromIndexValuesStep(index, false, ctx, profilingEnabled));
+
+        if (indexInternal instanceof IndexInternalOriginalKey) {
+          result.chain(
+              new FetchFromIndexValuesStep(
+                  (IndexInternalOriginalKey) indexInternal, false, ctx, profilingEnabled));
+        } else {
+          result.chain(
+              new FetchFromBinaryIndexValuesStep(
+                  (IndexInternalBinaryKey) indexInternal, false, ctx, profilingEnabled));
+        }
         result.chain(new GetValueFromIndexEntryStep(ctx, null, profilingEnabled));
         break;
     }

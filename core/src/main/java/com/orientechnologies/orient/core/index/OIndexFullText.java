@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Luca Garulli
  */
 @Deprecated
-public class OIndexFullText extends OIndexMultiValues {
+public class OIndexFullText extends IndexMultiValuesOriginalKey {
 
   private static final String CONFIG_STOP_WORDS = "stopWords";
   private static final String CONFIG_SEPARATOR_CHARS = "separatorChars";
@@ -261,7 +261,7 @@ public class OIndexFullText extends OIndexMultiValues {
   }
 
   @Override
-  public OIndexInternal create(
+  public IndexInternal create(
       OIndexDefinition indexDefinition,
       String clusterIndexName,
       Set<String> clustersToIndex,
@@ -283,7 +283,7 @@ public class OIndexFullText extends OIndexMultiValues {
   }
 
   @Override
-  public OIndexMultiValues create(
+  public IndexMultiValuesOriginalKey create(
       String name,
       OIndexDefinition indexDefinition,
       String clusterIndexName,

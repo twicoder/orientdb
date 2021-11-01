@@ -21,8 +21,8 @@ package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.index.IndexInternal;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -47,7 +47,7 @@ public class OTransactionIndexChanges {
 
   public boolean cleared = false;
 
-  private OIndexInternal resolvedIndex = null;
+  private IndexInternal resolvedIndex = null;
 
   public OTransactionIndexChangesPerKey getChangesPerKey(final Object key) {
     if (key == null) return nullKeyChanges;
@@ -106,7 +106,7 @@ public class OTransactionIndexChanges {
     return changesPerKey.floorKey(key);
   }
 
-  public OIndexInternal resolveAssociatedIndex(
+  public IndexInternal resolveAssociatedIndex(
       String indexName, OIndexManagerAbstract indexManager, ODatabaseDocumentInternal db) {
     if (resolvedIndex == null) {
       final OIndex index = indexManager.getIndex(db, indexName);
@@ -116,7 +116,7 @@ public class OTransactionIndexChanges {
     return resolvedIndex;
   }
 
-  public OIndexInternal getAssociatedIndex() {
+  public IndexInternal getAssociatedIndex() {
     return resolvedIndex;
   }
 }

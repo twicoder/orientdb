@@ -22,12 +22,9 @@ package com.orientechnologies.orient.core.sql.operator;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -89,7 +86,7 @@ public class OQueryOperatorIs extends OQueryOperatorEquality {
 
     final OIndexDefinition indexDefinition = index.getDefinition();
 
-    final OIndexInternal internalIndex = index.getInternal();
+    final IndexInternal internalIndex = index.getInternal();
     Stream<ORawPair<Object, ORID>> stream;
     if (!internalIndex.canBeUsedInEqualityOperators()) return null;
 
@@ -111,7 +108,12 @@ public class OQueryOperatorIs extends OQueryOperatorEquality {
       final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
 
       if (internalIndex.hasRangeQuerySupport()) {
-        stream = index.getInternal().streamEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
+        if (internalIndex instanceof IndexInternalBinaryKey) {
+          throw new OCommandExecutionException("Binary indexes are not supported by old executor");
+        }
+        stream =
+            ((IndexInternalOriginalKey) internalIndex)
+                .streamEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
       } else {
         if (indexDefinition.getParamCount() == keyParams.size()) {
           stream = index.getInternal().getRids(keyOne).map((rid) -> new ORawPair<>(keyOne, rid));

@@ -9,6 +9,9 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.IndexInternal;
+import com.orientechnologies.orient.core.index.IndexInternalBinaryKey;
+import com.orientechnologies.orient.core.index.IndexInternalOriginalKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
@@ -211,6 +214,8 @@ public class OTraverseExecutionPlanner {
       throw new OCommandExecutionException("Index not found: " + indexName);
     }
 
+    final IndexInternal indexInternal = index.getInternal();
+
     switch (indexIdentifier.getType()) {
       case INDEX:
         if (!index.supportsOrderedIterations()) {
@@ -218,7 +223,16 @@ public class OTraverseExecutionPlanner {
               "Index " + indexName + " does not allow iteration without a condition");
         }
 
-        result.chain(new FetchFromIndexStep(index, null, null, ctx, profilingEnabled));
+        if (indexInternal instanceof IndexInternalOriginalKey) {
+          result.chain(
+              new FetchFromIndexStep(
+                  (IndexInternalOriginalKey) indexInternal, null, null, ctx, profilingEnabled));
+        } else {
+          result.chain(
+              new FetchFromBinaryIndexStep(
+                  (IndexInternalBinaryKey) indexInternal, null, null, ctx, profilingEnabled));
+        }
+
         result.chain(new GetValueFromIndexEntryStep(ctx, null, profilingEnabled));
         break;
       case VALUES:
@@ -227,7 +241,16 @@ public class OTraverseExecutionPlanner {
           throw new OCommandExecutionException(
               "Index " + indexName + " does not allow iteration on values");
         }
-        result.chain(new FetchFromIndexValuesStep(index, true, ctx, profilingEnabled));
+        if (indexInternal instanceof IndexInternalOriginalKey) {
+          result.chain(
+              new FetchFromIndexValuesStep(
+                  (IndexInternalOriginalKey) indexInternal, true, ctx, profilingEnabled));
+        } else {
+          result.chain(
+              new FetchFromBinaryIndexValuesStep(
+                  (IndexInternalBinaryKey) indexInternal, true, ctx, profilingEnabled));
+        }
+
         result.chain(new GetValueFromIndexEntryStep(ctx, null, profilingEnabled));
         break;
       case VALUESDESC:
@@ -235,7 +258,17 @@ public class OTraverseExecutionPlanner {
           throw new OCommandExecutionException(
               "Index " + indexName + " does not allow iteration on values");
         }
-        result.chain(new FetchFromIndexValuesStep(index, false, ctx, profilingEnabled));
+
+        if (indexInternal instanceof IndexInternalOriginalKey) {
+          result.chain(
+              new FetchFromIndexValuesStep(
+                  (IndexInternalOriginalKey) indexInternal, false, ctx, profilingEnabled));
+        } else {
+          result.chain(
+              new FetchFromBinaryIndexValuesStep(
+                  (IndexInternalBinaryKey) indexInternal, false, ctx, profilingEnabled));
+        }
+
         result.chain(new GetValueFromIndexEntryStep(ctx, null, profilingEnabled));
         break;
     }

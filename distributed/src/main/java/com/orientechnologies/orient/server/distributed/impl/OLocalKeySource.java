@@ -2,7 +2,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.IndexInternal;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.distributed.impl.task.OLockKeySource;
@@ -29,7 +29,7 @@ public final class OLocalKeySource implements OLockKeySource {
     iTx.getIndexOperations()
         .forEach(
             (index, changes) -> {
-              OIndexInternal resolvedIndex =
+              IndexInternal resolvedIndex =
                   changes.resolveAssociatedIndex(
                       index, database.getMetadata().getIndexManagerInternal(), database);
               if (resolvedIndex.isUnique()) {

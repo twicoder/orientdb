@@ -3,15 +3,14 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.index.IndexInternalOriginalKey;
+import com.orientechnologies.orient.core.index.IndexInternalBinaryKey;
 
-/** Created by luigidellaquila on 02/08/16. */
-public class FetchFromIndexValuesStep extends FetchFromIndexStep {
+public class FetchFromBinaryIndexValuesStep extends FetchFromBinaryIndexStep {
 
   private boolean asc;
 
-  public FetchFromIndexValuesStep(
-      IndexInternalOriginalKey index, boolean asc, OCommandContext ctx, boolean profilingEnabled) {
+  public FetchFromBinaryIndexValuesStep(
+      IndexInternalBinaryKey index, boolean asc, OCommandContext ctx, boolean profilingEnabled) {
     super(index, null, null, ctx, profilingEnabled);
     this.asc = asc;
   }

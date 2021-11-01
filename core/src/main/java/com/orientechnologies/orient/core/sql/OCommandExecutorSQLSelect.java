@@ -50,14 +50,7 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexAbstract;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
-import com.orientechnologies.orient.core.index.OIndexEngineException;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.iterator.OIdentifiableIterator;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
@@ -2538,10 +2531,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         Stream<ORawPair<Object, ORID>> stream = null;
 
+        final IndexInternal indexInternal = index.getInternal();
+        if (indexInternal instanceof IndexInternalBinaryKey) {
+          throw new OCommandExecutionException("Binary indexes are not supported by old executor");
+        }
         if (ascSortOrder) {
-          stream = index.getInternal().stream();
+          stream = ((IndexInternalOriginalKey) indexInternal).stream();
         } else {
-          stream = index.getInternal().descStream();
+          stream = ((IndexInternalOriginalKey) indexInternal).descStream();
         }
 
         if (stream != null) streams.add(stream);
@@ -2802,14 +2799,18 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         throw new OCommandExecutionException("'Key' field is required for queries against indexes");
       }
 
+      final IndexInternal indexInternal = index.getInternal();
+      if (indexInternal instanceof IndexInternalBinaryKey) {
+        throw new OCommandExecutionException("Binary indexes are not supported by old executor");
+      }
+
       final OQueryOperator indexOperator = compiledFilter.getRootCondition().getOperator();
 
       if (indexOperator instanceof OQueryOperatorBetween) {
         final Object[] values = (Object[]) compiledFilter.getRootCondition().getRight();
 
         try (Stream<ORawPair<Object, ORID>> stream =
-            index
-                .getInternal()
+            ((IndexInternalOriginalKey) indexInternal)
                 .streamEntriesBetween(
                     getIndexKey(index.getDefinition(), values[0], context),
                     true,
@@ -2822,8 +2823,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         final Object value = compiledFilter.getRootCondition().getRight();
 
         try (Stream<ORawPair<Object, ORID>> stream =
-            index
-                .getInternal()
+            ((IndexInternalOriginalKey) indexInternal)
                 .streamEntriesMajor(
                     getIndexKey(index.getDefinition(), value, context), false, ascOrder)) {
           fetchEntriesFromIndexStream(stream);
@@ -2831,8 +2831,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       } else if (indexOperator instanceof OQueryOperatorMajorEquals) {
         final Object value = compiledFilter.getRootCondition().getRight();
         try (Stream<ORawPair<Object, ORID>> stream =
-            index
-                .getInternal()
+            ((IndexInternalOriginalKey) indexInternal)
                 .streamEntriesMajor(
                     getIndexKey(index.getDefinition(), value, context), true, ascOrder)) {
           fetchEntriesFromIndexStream(stream);
@@ -2842,8 +2841,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         final Object value = compiledFilter.getRootCondition().getRight();
 
         try (Stream<ORawPair<Object, ORID>> stream =
-            index
-                .getInternal()
+            ((IndexInternalOriginalKey) indexInternal)
                 .streamEntriesMinor(
                     getIndexKey(index.getDefinition(), value, context), false, ascOrder)) {
           fetchEntriesFromIndexStream(stream);
@@ -2852,8 +2850,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         final Object value = compiledFilter.getRootCondition().getRight();
 
         try (Stream<ORawPair<Object, ORID>> stream =
-            index
-                .getInternal()
+            ((IndexInternalOriginalKey) indexInternal)
                 .streamEntriesMinor(
                     getIndexKey(index.getDefinition(), value, context), true, ascOrder)) {
           fetchEntriesFromIndexStream(stream);
@@ -2871,7 +2868,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
 
         try (Stream<ORawPair<Object, ORID>> stream =
-            index.getInternal().streamEntries(values, true)) {
+            ((IndexInternalOriginalKey) indexInternal).streamEntries(values, true)) {
           fetchEntriesFromIndexStream(stream);
         }
       } else {
@@ -2901,7 +2898,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             res = index.getInternal().getRids(keyValue);
           } else {
             try (Stream<ORawPair<Object, ORID>> stream =
-                index.getInternal().streamEntriesBetween(keyValue, true, secondKey, true, true)) {
+                ((IndexInternalOriginalKey) indexInternal)
+                    .streamEntriesBetween(keyValue, true, secondKey, true, true)) {
               fetchEntriesFromIndexStream(stream);
             }
             return;
@@ -2934,7 +2932,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         return;
       }
 
-      final OIndexInternal indexInternal = index.getInternal();
+      final IndexInternal indexInternal = index.getInternal();
       if (indexInternal instanceof OSharedResource) {
         ((OSharedResource) indexInternal).acquireExclusiveLock();
       }
@@ -2943,13 +2941,15 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         // ADD ALL THE ITEMS AS RESULT
         if (ascOrder) {
-          try (Stream<ORawPair<Object, ORID>> stream = index.getInternal().stream()) {
+          try (Stream<ORawPair<Object, ORID>> stream =
+              ((IndexInternalOriginalKey) indexInternal).stream()) {
             fetchEntriesFromIndexStream(stream);
           }
           fetchNullKeyEntries(index);
         } else {
 
-          try (Stream<ORawPair<Object, ORID>> stream = index.getInternal().descStream()) {
+          try (Stream<ORawPair<Object, ORID>> stream =
+              ((IndexInternalOriginalKey) indexInternal).descStream()) {
             fetchNullKeyEntries(index);
             fetchEntriesFromIndexStream(stream);
           }

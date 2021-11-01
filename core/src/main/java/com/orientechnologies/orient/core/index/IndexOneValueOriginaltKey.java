@@ -43,8 +43,9 @@ import java.util.stream.Stream;
  *
  * @author Luca Garulli
  */
-public abstract class OIndexOneValue extends OIndexAbstract {
-  public OIndexOneValue(
+public abstract class IndexOneValueOriginaltKey extends OIndexAbstract
+    implements IndexInternalOriginalKey {
+  public IndexOneValueOriginaltKey(
       String name,
       final String type,
       String algorithm,
@@ -109,14 +110,14 @@ public abstract class OIndexOneValue extends OIndexAbstract {
     }
   }
 
-  public OIndexOneValue create(
+  public IndexOneValueOriginaltKey create(
       final String name,
       final OIndexDefinition indexDefinition,
       final String clusterIndexName,
       final Set<String> clustersToIndex,
       boolean rebuild,
       final OProgressListener progressListener) {
-    return (OIndexOneValue)
+    return (IndexOneValueOriginaltKey)
         super.create(
             indexDefinition,
             clusterIndexName,
@@ -279,6 +280,21 @@ public abstract class OIndexOneValue extends OIndexAbstract {
           doReloadIndexEngine();
         }
       }
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public Stream<Object> keyStream() {
+    acquireSharedLock();
+    try {
+      while (true)
+        try {
+          return storage.getIndexKeyStream(indexId);
+        } catch (OInvalidIndexEngineIdException ignore) {
+          doReloadIndexEngine();
+        }
     } finally {
       releaseSharedLock();
     }

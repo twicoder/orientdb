@@ -1,15 +1,11 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.IndexInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.stream.Stream;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -68,28 +64,15 @@ public class IndexTxTest extends DocumentDBBaseTest {
 
     database.commit();
 
-    Map<String, ORID> expectedResult = new HashMap<>();
-    expectedResult.put("doc1", doc1.getIdentity());
-    expectedResult.put("doc2", doc2.getIdentity());
-
     OIndex index = getIndex("IndexTxTestIndex");
-    Iterator<Object> keyIterator;
-    try (Stream<Object> keyStream = index.getInternal().keyStream()) {
-      keyIterator = keyStream.iterator();
+    IndexInternal indexInternal = index.getInternal();
+    Assert.assertEquals(2, indexInternal.size());
 
-      while (keyIterator.hasNext()) {
-        String key = (String) keyIterator.next();
-
-        final ORID expectedValue = expectedResult.get(key);
-        final ORID value;
-        try (Stream<ORID> stream = index.getInternal().getRids(key)) {
-          value = stream.findAny().orElse(null);
-        }
-
-        Assert.assertNotNull(value);
-        Assert.assertTrue(value.isPersistent());
-        Assert.assertEquals(value, expectedValue);
-      }
-    }
+    Assert.assertEquals(
+        indexInternal.getRids("doc1").findFirst().orElseThrow(AssertionError::new),
+        doc1.getIdentity());
+    Assert.assertEquals(
+        indexInternal.getRids("doc2").findFirst().orElseThrow(AssertionError::new),
+        doc2.getIdentity());
   }
 }

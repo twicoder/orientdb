@@ -31,8 +31,6 @@ import java.util.stream.Stream;
 /**
  * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit().
  * All the other operations are delegated to the wrapped OIndex instance.
- *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
   private static final OAlwaysLessKey ALWAYS_LESS_KEY = new OAlwaysLessKey();
@@ -56,7 +54,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
     LOWEST_BOUNDARY
   }
 
-  public OIndexTxAware(final ODatabaseDocumentInternal database, final OIndexInternal delegate) {
+  public OIndexTxAware(final ODatabaseDocumentInternal database, final IndexInternal delegate) {
     super(delegate);
     this.database = database;
   }
@@ -68,8 +66,16 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
     final OTransactionIndexChanges indexChanges =
         database.getMicroOrRegularTransaction().getIndexChanges(delegate.getName());
     if (indexChanges != null) {
-      try (Stream<ORawPair<Object, ORID>> stream = stream()) {
-        return stream.count();
+      if (this instanceof IndexInternalOriginalKey) {
+        final IndexInternalOriginalKey internalOriginalKey = (IndexInternalOriginalKey) this;
+        try (Stream<ORawPair<Object, ORID>> stream = internalOriginalKey.stream()) {
+          return stream.count();
+        }
+      } else {
+        final IndexInternalBinaryKey internalBinaryKey = (IndexInternalBinaryKey) this;
+        try (Stream<ORawPair<byte[], ORID>> stream = internalBinaryKey.stream()) {
+          return stream.count();
+        }
       }
     }
 

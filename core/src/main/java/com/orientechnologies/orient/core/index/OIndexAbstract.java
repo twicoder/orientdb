@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.common.comparator.ArrayWrapper;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
 import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
@@ -54,16 +55,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
@@ -75,7 +67,7 @@ import java.util.stream.Stream;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public abstract class OIndexAbstract implements OIndexInternal {
+public abstract class OIndexAbstract implements IndexInternal {
 
   protected static final String CONFIG_MAP_RID = "mapRid";
   private static final String CONFIG_CLUSTERS = "clusters";
@@ -130,13 +122,13 @@ public abstract class OIndexAbstract implements OIndexInternal {
       final String type,
       final String algorithm,
       final String valueContainerAlgorithm) {
-    final String indexName = config.field(OIndexInternal.CONFIG_NAME);
+    final String indexName = config.field(IndexInternal.CONFIG_NAME);
 
-    final ODocument indexDefinitionDoc = config.field(OIndexInternal.INDEX_DEFINITION);
+    final ODocument indexDefinitionDoc = config.field(IndexInternal.INDEX_DEFINITION);
     OIndexDefinition loadedIndexDefinition = null;
     if (indexDefinitionDoc != null) {
       try {
-        final String indexDefClassName = config.field(OIndexInternal.INDEX_DEFINITION_CLASS);
+        final String indexDefClassName = config.field(IndexInternal.INDEX_DEFINITION_CLASS);
         final Class<?> indexDefClass = Class.forName(indexDefClassName);
         loadedIndexDefinition =
             (OIndexDefinition) indexDefClass.getDeclaredConstructor().newInstance();
@@ -152,7 +144,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
       }
     } else {
       // @COMPATIBILITY 1.0rc6 new index model was implemented
-      final Boolean isAutomatic = config.field(OIndexInternal.CONFIG_AUTOMATIC);
+      final Boolean isAutomatic = config.field(IndexInternal.CONFIG_AUTOMATIC);
       OIndexFactory factory = OIndexes.getFactory(type, algorithm);
       if (Boolean.TRUE.equals(isAutomatic)) {
         final int pos = indexName.lastIndexOf('.');
@@ -163,7 +155,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
         final String className = indexName.substring(0, pos);
         final String propertyName = indexName.substring(pos + 1);
 
-        final String keyTypeStr = config.field(OIndexInternal.CONFIG_KEYTYPE);
+        final String keyTypeStr = config.field(IndexInternal.CONFIG_KEYTYPE);
         if (keyTypeStr == null)
           throw new OIndexException(
               "Cannot convert from old index model to new one. " + "Index key type is absent");
@@ -171,15 +163,15 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
         loadedIndexDefinition = new OPropertyIndexDefinition(className, propertyName, keyType);
 
-        config.removeField(OIndexInternal.CONFIG_AUTOMATIC);
-        config.removeField(OIndexInternal.CONFIG_KEYTYPE);
-      } else if (config.field(OIndexInternal.CONFIG_KEYTYPE) != null) {
-        final String keyTypeStr = config.field(OIndexInternal.CONFIG_KEYTYPE);
+        config.removeField(IndexInternal.CONFIG_AUTOMATIC);
+        config.removeField(IndexInternal.CONFIG_KEYTYPE);
+      } else if (config.field(IndexInternal.CONFIG_KEYTYPE) != null) {
+        final String keyTypeStr = config.field(IndexInternal.CONFIG_KEYTYPE);
         final OType keyType = OType.valueOf(keyTypeStr.toUpperCase(Locale.ENGLISH));
 
         loadedIndexDefinition = new OSimpleKeyIndexDefinition(keyType);
 
-        config.removeField(OIndexInternal.CONFIG_KEYTYPE);
+        config.removeField(IndexInternal.CONFIG_KEYTYPE);
       }
     }
 
@@ -210,7 +202,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
    *
    * @param clusterIndexName Cluster name where to place the TreeMap
    */
-  public OIndexInternal create(
+  public IndexInternal create(
       final OIndexDefinition indexDefinition,
       final String clusterIndexName,
       final Set<String> clustersToIndex,
@@ -246,7 +238,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
               true,
               version,
               1,
-              this instanceof OIndexMultiValues,
+              this instanceof IndexMultiValuesOriginalKey,
               engineProperties,
               clustersToIndex,
               metadata);
@@ -312,7 +304,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
                   true,
                   version,
                   1,
-                  this instanceof OIndexMultiValues,
+                  this instanceof IndexMultiValuesOriginalKey,
                   engineProperties);
           apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
         }
@@ -383,17 +375,38 @@ public abstract class OIndexAbstract implements OIndexInternal {
   /** Counts the entries for the key. */
   @Deprecated
   public long count(Object iKey) {
-    try (Stream<ORawPair<Object, ORID>> stream =
-        streamEntriesBetween(iKey, true, iKey, true, true)) {
-      return stream.count();
+    if (this instanceof IndexInternalOriginalKey) {
+      final IndexInternalOriginalKey indexInternalObject = (IndexInternalOriginalKey) this;
+      try (Stream<ORawPair<Object, ORID>> stream =
+          indexInternalObject.streamEntriesBetween(iKey, true, iKey, true, true)) {
+        return stream.count();
+      }
+    } else if (this instanceof IndexInternalBinaryKey) {
+      final IndexInternalBinaryKey indexInternalBinary = (IndexInternalBinaryKey) this;
+      try (Stream<ORawPair<byte[], ORID>> stream =
+          indexInternalBinary.streamEntriesBetween(iKey, true, iKey, true, true)) {
+        return stream.count();
+      }
+    } else {
+      throw new IllegalStateException("Illegal type of index, count is not supported");
     }
   }
 
   /** @return Number of keys in index */
   @Deprecated
   public long getKeySize() {
-    try (Stream<Object> stream = keyStream()) {
-      return stream.distinct().count();
+    if (this instanceof IndexInternalOriginalKey) {
+      final IndexInternalOriginalKey indexInternalObject = (IndexInternalOriginalKey) this;
+      try (Stream<Object> stream = indexInternalObject.keyStream()) {
+        return stream.distinct().count();
+      }
+    } else if (this instanceof IndexInternalBinaryKey) {
+      final IndexInternalBinaryKey indexInternalBinary = (IndexInternalBinaryKey) this;
+      try (Stream<byte[]> stream = indexInternalBinary.keyStream()) {
+        return stream.map(ArrayWrapper::new).count();
+      }
+    } else {
+      throw new IllegalStateException("Illegal type of index, key size is not supported");
     }
   }
 
@@ -419,80 +432,128 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
   @Deprecated
   public Object getFirstKey() {
-    try (final Stream<Object> stream = keyStream()) {
-      final Iterator<Object> iterator = stream.iterator();
-      if (iterator.hasNext()) {
-        return iterator.next();
-      }
+    if (this instanceof IndexInternalOriginalKey) {
+      final IndexInternalOriginalKey indexInternalObject = (IndexInternalOriginalKey) this;
+      try (final Stream<Object> stream = indexInternalObject.keyStream()) {
+        final Iterator<Object> iterator = stream.iterator();
+        if (iterator.hasNext()) {
+          return iterator.next();
+        }
 
-      return null;
+        return null;
+      }
+    } else {
+      throw new IllegalStateException("Invalid index type, getFirstKey is not supported");
     }
   }
 
   @Deprecated
   public Object getLastKey() {
-    try (final Stream<ORawPair<Object, ORID>> stream = descStream()) {
-      final Iterator<ORawPair<Object, ORID>> iterator = stream.iterator();
-      if (iterator.hasNext()) {
-        return iterator.next().first;
-      }
+    if (this instanceof IndexInternalOriginalKey) {
+      final IndexInternalOriginalKey indexInternalObject = (IndexInternalOriginalKey) this;
+      try (final Stream<ORawPair<Object, ORID>> stream = indexInternalObject.descStream()) {
+        final Iterator<ORawPair<Object, ORID>> iterator = stream.iterator();
+        if (iterator.hasNext()) {
+          return iterator.next().first;
+        }
 
-      return null;
+        return null;
+      }
+    } else {
+      throw new IllegalStateException("Invalid index type, getLastKey is not supported");
     }
   }
 
   @Deprecated
   public OIndexCursor cursor() {
-    return new StreamWrapper(stream());
+    if (this instanceof IndexInternalOriginalKey) {
+      final IndexInternalOriginalKey indexInternalObject = (IndexInternalOriginalKey) this;
+      return new StreamWrapper(indexInternalObject.stream());
+    } else {
+      throw new IllegalStateException("Invalid index type, cursor is not supported");
+    }
   }
 
   @Deprecated
   @Override
   public OIndexCursor descCursor() {
-    return new StreamWrapper(descStream());
+    if (this instanceof IndexInternalOriginalKey) {
+      final IndexInternalOriginalKey indexInternalObject = (IndexInternalOriginalKey) this;
+      return new StreamWrapper(indexInternalObject.descStream());
+    } else {
+      throw new IllegalStateException("Invalid index type, descCursor is not supported");
+    }
   }
 
   @Deprecated
   @Override
   public OIndexKeyCursor keyCursor() {
-    return new OIndexKeyCursor() {
-      private final Iterator<Object> keyIterator = keyStream().iterator();
+    if (this instanceof IndexInternalOriginalKey) {
+      final IndexInternalOriginalKey indexInternalObject = (IndexInternalOriginalKey) this;
+      return new OIndexKeyCursor() {
+        private final Iterator<Object> keyIterator = indexInternalObject.keyStream().iterator();
 
-      @Override
-      public Object next(int prefetchSize) {
-        if (keyIterator.hasNext()) {
-          return keyIterator.next();
+        @Override
+        public Object next(int prefetchSize) {
+          if (keyIterator.hasNext()) {
+            return keyIterator.next();
+          }
+
+          return null;
         }
-
-        return null;
-      }
-    };
+      };
+    } else {
+      throw new IllegalStateException("Invalid index type, keyCursor is not supported");
+    }
   }
 
   @Deprecated
   @Override
   public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
-    return new StreamWrapper(streamEntries(keys, ascSortOrder));
+    if (this instanceof IndexInternalOriginalKey) {
+      final IndexInternalOriginalKey indexInternalObject = (IndexInternalOriginalKey) this;
+      return new StreamWrapper(indexInternalObject.streamEntries(keys, ascSortOrder));
+    } else {
+      throw new IllegalStateException("Invalid index type, iterateEntries is not supported");
+    }
   }
 
   @Deprecated
   @Override
   public OIndexCursor iterateEntriesBetween(
       Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive, boolean ascOrder) {
-    return new StreamWrapper(
-        streamEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder));
+    if (this instanceof IndexInternalOriginalKey) {
+      final IndexInternalOriginalKey indexInternalObject = (IndexInternalOriginalKey) this;
+      return new StreamWrapper(
+          indexInternalObject.streamEntriesBetween(
+              fromKey, fromInclusive, toKey, toInclusive, ascOrder));
+    } else {
+      throw new IllegalStateException("Invalid index type,iterateEntriesBetween is not supported");
+    }
   }
 
   @Deprecated
   @Override
   public OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
-    return new StreamWrapper(streamEntriesMajor(fromKey, fromInclusive, ascOrder));
+    if (this instanceof IndexInternalOriginalKey) {
+      final IndexInternalOriginalKey indexInternalObject = (IndexInternalOriginalKey) this;
+      return new StreamWrapper(
+          indexInternalObject.streamEntriesMajor(fromKey, fromInclusive, ascOrder));
+    } else {
+      throw new IllegalStateException("Invalid index type,iterateEntriesMajor is not supported");
+    }
   }
 
   @Deprecated
   @Override
   public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
-    return new StreamWrapper(streamEntriesMajor(toKey, toInclusive, ascOrder));
+    if (this instanceof IndexInternalOriginalKey) {
+      final IndexInternalOriginalKey indexInternalObject = (IndexInternalOriginalKey) this;
+      return new StreamWrapper(
+          indexInternalObject.streamEntriesMajor(toKey, toInclusive, ascOrder));
+    } else {
+      throw new IllegalStateException("Invalid index type,iterateEntriesMinor is not supported");
+    }
   }
 
   /** {@inheritDoc} */
@@ -522,7 +583,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
               true,
               version,
               1,
-              this instanceof OIndexMultiValues,
+              this instanceof IndexMultiValuesOriginalKey,
               engineProperties,
               clustersToIndex,
               metadata);
@@ -660,7 +721,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
     }
   }
 
-  public OIndexInternal delete() {
+  public IndexInternal delete() {
     acquireExclusiveLock();
 
     try {
@@ -678,9 +739,18 @@ public abstract class OIndexAbstract implements OIndexInternal {
   private void doDelete() {
     while (true)
       try {
-        //noinspection ObjectAllocationInLoop
-        try (final Stream<ORawPair<Object, ORID>> stream = stream()) {
-          stream.forEach((pair) -> remove(pair.first, pair.second));
+
+        if (this instanceof IndexInternalBinaryKey) {
+          final IndexInternalBinaryKey indexInternalBinary = (IndexInternalBinaryKey) this;
+          //noinspection ObjectAllocationInLoop
+          try (final Stream<ORawPair<byte[], ORID>> stream = indexInternalBinary.stream()) {
+            stream.forEach((pair) -> indexInternalBinary.rawRemove(pair.first, pair.second));
+          }
+        } else {
+          final IndexInternalOriginalKey indexInternalObject = (IndexInternalOriginalKey) this;
+          try (final Stream<ORawPair<Object, ORID>> stream = indexInternalObject.stream()) {
+            stream.forEach((pair) -> remove(pair.first, pair.second));
+          }
         }
 
         try (Stream<ORID> stream = getRids(null)) {
@@ -729,7 +799,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
     }
   }
 
-  public OIndexInternal getInternal() {
+  public IndexInternal getInternal() {
     return this;
   }
 
@@ -781,7 +851,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
     configuration.updateConfiguration(
         type, name, version, indexDefinition, clustersToIndex, algorithm, valueContainerAlgorithm);
     if (metadata != null)
-      configuration.document.field(OIndexInternal.METADATA, metadata, OType.EMBEDDED);
+      configuration.document.field(IndexInternal.METADATA, metadata, OType.EMBEDDED);
     return configuration.getDocument();
   }
 
@@ -880,21 +950,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
       if (indexDefinition == null) return null;
 
       return indexDefinition.getTypes();
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  @Override
-  public Stream<Object> keyStream() {
-    acquireSharedLock();
-    try {
-      while (true)
-        try {
-          return storage.getIndexKeyStream(indexId);
-        } catch (OInvalidIndexEngineIdException ignore) {
-          doReloadIndexEngine();
-        }
     } finally {
       releaseSharedLock();
     }
@@ -1163,20 +1218,20 @@ public abstract class OIndexAbstract implements OIndexInternal {
         Set<String> clustersToIndex,
         String algorithm,
         String valueContainerAlgorithm) {
-      document.field(OIndexInternal.CONFIG_TYPE, type);
-      document.field(OIndexInternal.CONFIG_NAME, name);
-      document.field(OIndexInternal.INDEX_VERSION, version);
+      document.field(IndexInternal.CONFIG_TYPE, type);
+      document.field(IndexInternal.CONFIG_NAME, name);
+      document.field(IndexInternal.INDEX_VERSION, version);
 
       if (indexDefinition != null) {
 
         final ODocument indexDefDocument = indexDefinition.toStream();
         if (!indexDefDocument.hasOwners()) ODocumentInternal.addOwner(indexDefDocument, document);
 
-        document.field(OIndexInternal.INDEX_DEFINITION, indexDefDocument, OType.EMBEDDED);
-        document.field(OIndexInternal.INDEX_DEFINITION_CLASS, indexDefinition.getClass().getName());
+        document.field(IndexInternal.INDEX_DEFINITION, indexDefDocument, OType.EMBEDDED);
+        document.field(IndexInternal.INDEX_DEFINITION_CLASS, indexDefinition.getClass().getName());
       } else {
-        document.removeField(OIndexInternal.INDEX_DEFINITION);
-        document.removeField(OIndexInternal.INDEX_DEFINITION_CLASS);
+        document.removeField(IndexInternal.INDEX_DEFINITION);
+        document.removeField(IndexInternal.INDEX_DEFINITION_CLASS);
       }
 
       document.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);

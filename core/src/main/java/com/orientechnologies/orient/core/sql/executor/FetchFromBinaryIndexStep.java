@@ -50,9 +50,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/** Created by luigidellaquila on 23/07/16. */
-public class FetchFromIndexStep extends AbstractExecutionStep {
-  protected IndexInternalOriginalKey index;
+public class FetchFromBinaryIndexStep extends AbstractExecutionStep {
+  protected IndexInternalBinaryKey index;
   protected OBooleanExpression condition;
   private OBinaryCondition additionalRangeCondition;
 
@@ -64,21 +63,21 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   private long count = 0;
 
   private boolean inited = false;
-  private Stream<ORawPair<Object, ORID>> stream;
-  private Iterator<ORawPair<Object, ORID>> indexIterator;
+  private Stream<ORawPair<byte[], ORID>> stream;
+  private Iterator<ORawPair<byte[], ORID>> indexIterator;
 
-  private final List<Stream<ORawPair<Object, ORID>>> nextStreams = new ArrayList<>();
+  private final List<Stream<ORawPair<byte[], ORID>>> nextStreams = new ArrayList<>();
 
-  private OMultiCollectionIterator<Map.Entry<Object, OIdentifiable>> customIterator;
+  private OMultiCollectionIterator<Map.Entry<byte[], OIdentifiable>> customIterator;
   private Iterator nullKeyIterator;
-  private ORawPair<Object, ORID> nextEntry = null;
+  private ORawPair<byte[], ORID> nextEntry = null;
 
-  private final Set<Stream<ORawPair<Object, ORID>>> acquiredStreams =
+  private final Set<Stream<ORawPair<byte[], ORID>>> acquiredStreams =
       Collections.newSetFromMap(new IdentityHashMap<>());
   private final Set<Stream<ORID>> acquiredRidStreams = new HashSet<>();
 
-  public FetchFromIndexStep(
-      IndexInternalOriginalKey index,
+  public FetchFromBinaryIndexStep(
+      IndexInternalBinaryKey index,
       OBooleanExpression condition,
       OBinaryCondition additionalRangeCondition,
       OCommandContext ctx,
@@ -86,8 +85,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     this(index, condition, additionalRangeCondition, true, ctx, profilingEnabled);
   }
 
-  public FetchFromIndexStep(
-      IndexInternalOriginalKey index,
+  public FetchFromBinaryIndexStep(
+      IndexInternalBinaryKey index,
       OBooleanExpression condition,
       OBinaryCondition additionalRangeCondition,
       boolean orderAsc,
@@ -106,7 +105,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     viewManager.startUsingViewIndex(indexName);
   }
 
-  private FetchFromIndexStep(
+  private FetchFromBinaryIndexStep(
       String indexName,
       OBooleanExpression condition,
       OBinaryCondition additionalRangeCondition,
@@ -157,14 +156,14 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         }
         long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
-          Object key = nextEntry.first;
+          byte[] key = nextEntry.first;
           OIdentifiable value = nextEntry.second;
 
           nextEntry = null;
 
           localCount++;
           OResultInternal result = new OResultInternal();
-          result.setProperty("key", convertKey(key));
+          result.setProperty("key", key);
           result.setProperty("rid", value);
           ctx.setVariable("$current", result);
           return result;
@@ -192,13 +191,6 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     };
   }
 
-  private static Object convertKey(Object key) {
-    if (key instanceof OCompositeKey) {
-      return new ArrayList<>(((OCompositeKey) key).getKeys());
-    }
-    return key;
-  }
-
   private void fetchNextEntry() {
     nextEntry = null;
     if (stream != null) {
@@ -219,7 +211,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       }
     }
     if (nextEntry == null && customIterator != null && customIterator.hasNext()) {
-      final Map.Entry<Object, OIdentifiable> entry = customIterator.next();
+      final Map.Entry<byte[], OIdentifiable> entry = customIterator.next();
       nextEntry = new ORawPair<>(entry.getKey(), entry.getValue().getIdentity());
     }
 
@@ -234,7 +226,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     }
   }
 
-  private void storeAcquiredStream(Stream<ORawPair<Object, ORID>> stream) {
+  private void storeAcquiredStream(Stream<ORawPair<byte[], ORID>> stream) {
     if (stream != null) {
       acquiredStreams.add(stream);
     }
@@ -283,7 +275,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     long begin = profilingEnabled ? System.nanoTime() : 0;
     if (index == null) {
       index =
-          (IndexInternalOriginalKey)
+          (IndexInternalBinaryKey)
               db.getMetadata().getIndexManagerInternal().getIndex(db, indexName).getInternal();
     }
     try {
@@ -335,7 +327,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
           }
         }
 
-        Iterator<ORawPair<Object, ORID>> localCursor =
+        Iterator<ORawPair<byte[], ORID>> localCursor =
             createCursor(equals, definition, item, ctx).iterator();
         final Object itemRef = item;
         customIterator.add(
@@ -351,7 +343,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
                   throw new IllegalStateException();
                 }
 
-                ORawPair<Object, ORID> value = localCursor.next();
+                ORawPair<byte[], ORID> value = localCursor.next();
                 return new Map.Entry() {
                   @Override
                   public Object getKey() {
@@ -535,7 +527,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         && !index.getAlgorithm().equalsIgnoreCase("LUCENE");
   }
 
-  private Stream<ORawPair<Object, ORID>> getStreamForNullKey() {
+  private Stream<ORawPair<byte[], ORID>> getStreamForNullKey() {
     final Stream<ORID> stream = index.getRids(null);
     acquiredRidStreams.add(stream);
 
@@ -554,7 +546,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     if (value instanceof List) {
       try (Stream stream = ((List) value).stream()) {
         //noinspection unchecked
-        return stream.map(FetchFromIndexStep::unboxOResult).collect(Collectors.toList());
+        return stream.map(FetchFromBinaryIndexStep::unboxOResult).collect(Collectors.toList());
       }
     }
     if (value instanceof OResult) {
@@ -737,7 +729,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     return rightValue;
   }
 
-  private Stream<ORawPair<Object, ORID>> createCursor(
+  private Stream<ORawPair<byte[], ORID>> createCursor(
       OBinaryCompareOperator operator,
       OIndexDefinition definition,
       Object value,
@@ -1006,7 +998,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   @Override
   public OExecutionStep copy(OCommandContext ctx) {
-    return new FetchFromIndexStep(
+    return new FetchFromBinaryIndexStep(
         indexName,
         Optional.ofNullable(this.condition).map(OBooleanExpression::copy).orElse(null),
         Optional.ofNullable(this.additionalRangeCondition).map(OBinaryCondition::copy).orElse(null),
@@ -1016,7 +1008,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   }
 
   private void closeStreams() {
-    for (final Stream<ORawPair<Object, ORID>> stream : acquiredStreams) {
+    for (final Stream<ORawPair<byte[], ORID>> stream : acquiredStreams) {
       stream.close();
     }
 

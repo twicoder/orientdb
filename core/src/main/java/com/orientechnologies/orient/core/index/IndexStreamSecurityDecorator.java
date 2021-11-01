@@ -27,7 +27,7 @@ public class IndexStreamSecurityDecorator {
     }
 
     return stream.filter(
-        (pair) -> OIndexInternal.securityFilterOnRead(originalIndex, pair.second) != null);
+        (pair) -> IndexInternal.securityFilterOnRead(originalIndex, pair.second) != null);
   }
 
   public static Stream<ORID> decorateRidStream(OIndex originalIndex, Stream<ORID> stream) {
@@ -46,6 +46,6 @@ public class IndexStreamSecurityDecorator {
       return stream;
     }
 
-    return stream.filter((rid) -> OIndexInternal.securityFilterOnRead(originalIndex, rid) != null);
+    return stream.filter((rid) -> IndexInternal.securityFilterOnRead(originalIndex, rid) != null);
   }
 }

@@ -46,13 +46,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * Abstract index implementation that supports multi-values for the same key.
- *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- */
-public abstract class OIndexMultiValues extends OIndexAbstract {
-  OIndexMultiValues(
+/** Abstract index implementation that supports multi-values for the same key. */
+public abstract class IndexMultiValuesOriginalKey extends OIndexAbstract
+    implements IndexInternalOriginalKey {
+  IndexMultiValuesOriginalKey(
       String name,
       final String type,
       String algorithm,
@@ -117,7 +114,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     }
   }
 
-  public OIndexMultiValues put(Object key, final OIdentifiable singleValue) {
+  public IndexMultiValuesOriginalKey put(Object key, final OIdentifiable singleValue) {
     key = getCollatingValue(key);
 
     acquireSharedLock();
@@ -281,7 +278,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     return storage.removeRidIndexEntry(indexId, key, value.getIdentity());
   }
 
-  public OIndexMultiValues create(
+  public IndexMultiValuesOriginalKey create(
       final String name,
       final OIndexDefinition indexDefinition,
       final String clusterIndexName,
@@ -289,7 +286,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
       boolean rebuild,
       final OProgressListener progressListener) {
 
-    return (OIndexMultiValues)
+    return (IndexMultiValuesOriginalKey)
         super.create(
             indexDefinition,
             clusterIndexName,
@@ -467,6 +464,21 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
         }
       }
 
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public Stream<Object> keyStream() {
+    acquireSharedLock();
+    try {
+      while (true)
+        try {
+          return storage.getIndexKeyStream(indexId);
+        } catch (OInvalidIndexEngineIdException ignore) {
+          doReloadIndexEngine();
+        }
     } finally {
       releaseSharedLock();
     }

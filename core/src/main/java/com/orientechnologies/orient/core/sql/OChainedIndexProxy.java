@@ -25,14 +25,9 @@ import com.orientechnologies.common.profiler.OProfilerStub;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexAbstract;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
-import com.orientechnologies.orient.core.index.OIndexMetadata;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -67,7 +62,7 @@ import java.util.stream.Stream;
  * @author Artem Orobets
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
-public class OChainedIndexProxy<T> implements OIndexInternal {
+public class OChainedIndexProxy<T> implements IndexInternalOriginalKey {
   private final OIndex firstIndex;
 
   private final List<OIndex> indexChain;
@@ -316,7 +311,7 @@ public class OChainedIndexProxy<T> implements OIndexInternal {
    * Returns internal index of last chain index, because proxy applicable to all operations that
    * last index applicable.
    */
-  public OIndexInternal getInternal() {
+  public IndexInternal getInternal() {
     return this;
   }
 
@@ -343,8 +338,13 @@ public class OChainedIndexProxy<T> implements OIndexInternal {
         }
       } else {
         final List<OIdentifiable> keys;
+        final IndexInternal indexInternal = currentIndex.getInternal();
+        if (indexInternal instanceof IndexInternalBinaryKey) {
+          throw new OCommandExecutionException("Binary indexes are not supported by old executor");
+        }
+
         try (Stream<ORawPair<Object, ORID>> stream =
-            currentIndex.getInternal().streamEntries(currentKeys, true)) {
+            ((IndexInternalOriginalKey) indexInternal).streamEntries(currentKeys, true)) {
           keys = stream.map((pair) -> pair.second).collect(Collectors.toList());
         }
         newKeys = prepareKeys(nextIndex, keys);
@@ -366,8 +366,12 @@ public class OChainedIndexProxy<T> implements OIndexInternal {
         result.addAll(getFromCompositeIndex(key, firstIndex));
       }
     } else {
+      final IndexInternal indexInternal = firstIndex.getInternal();
+      if (indexInternal instanceof IndexInternalBinaryKey) {
+        throw new OCommandExecutionException("Binary indexes are not supported by old executor");
+      }
       try (Stream<ORawPair<Object, ORID>> stream =
-          firstIndex.getInternal().streamEntries(currentKeys, true)) {
+          ((IndexInternalOriginalKey) indexInternal).streamEntries(currentKeys, true)) {
         result = stream.map((pair) -> pair.second).collect(Collectors.toList());
       }
     }
@@ -378,8 +382,13 @@ public class OChainedIndexProxy<T> implements OIndexInternal {
   }
 
   private static List<ORID> getFromCompositeIndex(Comparable currentKey, OIndex currentIndex) {
+    final IndexInternal indexInternal = currentIndex.getInternal();
+    if (indexInternal instanceof IndexInternalBinaryKey) {
+      throw new OCommandExecutionException("Binary indexes are not supported by old executor");
+    }
     try (Stream<ORawPair<Object, ORID>> stream =
-        currentIndex.getInternal().streamEntriesBetween(currentKey, true, currentKey, true, true)) {
+        ((IndexInternalOriginalKey) indexInternal)
+            .streamEntriesBetween(currentKey, true, currentKey, true, true)) {
       return stream.map((pair) -> pair.second).collect(Collectors.toList());
     }
   }
@@ -712,30 +721,51 @@ public class OChainedIndexProxy<T> implements OIndexInternal {
 
   @Override
   public Stream<ORawPair<Object, ORID>> streamEntries(Collection<?> keys, boolean ascSortOrder) {
-    return applyTailIndexes(lastIndex.getInternal().streamEntries(keys, ascSortOrder));
+    final IndexInternal indexInternal = lastIndex.getInternal();
+    if (indexInternal instanceof IndexInternalBinaryKey) {
+      throw new OCommandExecutionException("Binary indexes are not supported by old executor");
+    }
+
+    return applyTailIndexes(
+        ((IndexInternalOriginalKey) indexInternal).streamEntries(keys, ascSortOrder));
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> streamEntriesBetween(
       Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive, boolean ascOrder) {
+    final IndexInternal indexInternal = lastIndex.getInternal();
+    if (indexInternal instanceof IndexInternalBinaryKey) {
+      throw new OCommandExecutionException("Binary indexes are not supported by old executor");
+    }
+
     return applyTailIndexes(
-        lastIndex
-            .getInternal()
+        ((IndexInternalOriginalKey) indexInternal)
             .streamEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder));
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> streamEntriesMajor(
       Object fromKey, boolean fromInclusive, boolean ascOrder) {
+    final IndexInternal indexInternal = lastIndex.getInternal();
+    if (indexInternal instanceof IndexInternalBinaryKey) {
+      throw new OCommandExecutionException("Binary indexes are not supported by old executor");
+    }
+
     return applyTailIndexes(
-        lastIndex.getInternal().streamEntriesMajor(fromKey, fromInclusive, ascOrder));
+        ((IndexInternalOriginalKey) indexInternal)
+            .streamEntriesMajor(fromKey, fromInclusive, ascOrder));
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> streamEntriesMinor(
       Object toKey, boolean toInclusive, boolean ascOrder) {
+    final IndexInternal indexInternal = lastIndex.getInternal();
+    if (indexInternal instanceof IndexInternalBinaryKey) {
+      throw new OCommandExecutionException("Binary indexes are not supported by old executor");
+    }
     return applyTailIndexes(
-        lastIndex.getInternal().streamEntriesMinor(toKey, toInclusive, ascOrder));
+        ((IndexInternalOriginalKey) indexInternal)
+            .streamEntriesMinor(toKey, toInclusive, ascOrder));
   }
 
   @Override

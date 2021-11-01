@@ -76,10 +76,10 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.IndexInternal;
 import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.index.OIndexes;
@@ -2458,7 +2458,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private void commitIndexes(final Map<String, OTransactionIndexChanges> indexesToCommit) {
     for (final OTransactionIndexChanges changes : indexesToCommit.values()) {
-      final OIndexInternal index = changes.getAssociatedIndex();
+      final IndexInternal index = changes.getAssociatedIndex();
       if (!index.isNativeTxSupported()) {
         final OIndexAbstract.IndexTxSnapshot snapshot = new OIndexAbstract.IndexTxSnapshot();
         index.addTxOperation(snapshot, changes);
@@ -2482,7 +2482,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private void applyTxChanges(OTransactionIndexChangesPerKey changes, OIndexInternal index)
+  private void applyTxChanges(OTransactionIndexChangesPerKey changes, IndexInternal index)
       throws OInvalidIndexEngineIdException {
 
     for (OTransactionIndexChangesPerKey.OTransactionIndexEntry op :
@@ -6326,7 +6326,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     for (final OTransactionIndexChanges changes : indexes.values()) {
       assert changes.changesPerKey instanceof TreeMap;
 
-      final OIndexInternal index = changes.getAssociatedIndex();
+      final IndexInternal index = changes.getAssociatedIndex();
 
       final List<Object> orderedIndexNames = new ArrayList<>(changes.changesPerKey.keySet());
       if (orderedIndexNames.size() > 1) {
@@ -6371,7 +6371,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     for (final Map.Entry<String, OTransactionIndexChanges> entry : indexes.entrySet()) {
       final String indexName = entry.getKey();
-      final OIndexInternal index = entry.getValue().resolveAssociatedIndex(indexName, manager, db);
+      final IndexInternal index = entry.getValue().resolveAssociatedIndex(indexName, manager, db);
 
       if (!index.isUnique()) {
         atomicOperationsManager.acquireExclusiveLockTillOperationComplete(

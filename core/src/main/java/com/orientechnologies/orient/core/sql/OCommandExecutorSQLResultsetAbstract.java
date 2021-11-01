@@ -28,6 +28,9 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.IndexInternal;
+import com.orientechnologies.orient.core.index.IndexInternalBinaryKey;
+import com.orientechnologies.orient.core.index.IndexInternalOriginalKey;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClassDescendentOrder;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClusters;
@@ -103,19 +106,24 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     private IndexValuesIterator(String indexName, boolean ascOrder) {
       final ODatabaseDocumentInternal database = getDatabase();
+
+      final IndexInternal indexInternal =
+          database
+              .getMetadata()
+              .getIndexManagerInternal()
+              .getIndex(database, indexName)
+              .getInternal();
+      if (indexInternal instanceof IndexInternalBinaryKey) {
+        throw new OCommandExecutionException("Binary indexes are not supported by old executor");
+      }
       if (ascOrder) {
+
         indexValuesIterator =
-            database.getMetadata().getIndexManagerInternal().getIndex(database, indexName)
-                .getInternal().stream()
-                .map((pair) -> pair.second)
-                .iterator();
+            ((IndexInternalOriginalKey) indexInternal)
+                .stream().map((pair) -> pair.second).iterator();
       } else
         indexValuesIterator =
-            database
-                .getMetadata()
-                .getIndexManagerInternal()
-                .getIndex(database, indexName)
-                .getInternal()
+            ((IndexInternalOriginalKey) indexInternal)
                 .descStream()
                 .map((pair) -> pair.second)
                 .iterator();

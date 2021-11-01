@@ -24,12 +24,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
-/**
- * Index implementation that allows multiple values for the same key.
- *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- */
-public class OIndexNotUnique extends OIndexMultiValues {
+/** Index implementation that allows multiple values for the same key. */
+public class OIndexNotUnique extends IndexMultiValuesOriginalKey {
 
   public OIndexNotUnique(
       String name,

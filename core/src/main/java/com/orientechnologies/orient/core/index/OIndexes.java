@@ -144,7 +144,7 @@ public final class OIndexes {
    * @throws OConfigurationException if index creation failed
    * @throws OIndexException if index type does not exist
    */
-  public static OIndexInternal createIndex(
+  public static IndexInternal createIndex(
       OStorage storage,
       String name,
       String indexType,

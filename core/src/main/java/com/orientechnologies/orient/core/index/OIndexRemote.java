@@ -226,7 +226,7 @@ public abstract class OIndexRemote implements OIndex {
   public int getVersion() {
     if (configuration == null) return -1;
 
-    final Integer version = configuration.field(OIndexInternal.INDEX_VERSION);
+    final Integer version = configuration.field(IndexInternal.INDEX_VERSION);
     if (version != null) return version;
 
     return -1;
@@ -300,7 +300,7 @@ public abstract class OIndexRemote implements OIndex {
     return rid;
   }
 
-  public OIndexInternal getInternal() {
+  public IndexInternal getInternal() {
     return null;
   }
 

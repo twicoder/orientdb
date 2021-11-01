@@ -23,11 +23,11 @@ package com.tinkerpop.blueprints.impls.orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.IndexInternal;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.index.OIndexTxAwareMultiValue;
-import com.orientechnologies.orient.core.index.OIndexTxAwareOneValue;
+import com.orientechnologies.orient.core.index.OIndexTxAwareMultiValueOriginal;
+import com.orientechnologies.orient.core.index.OIndexTxAwareOneValueOriginalKey;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -72,13 +72,14 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
 
   protected OrientIndexManual(final OrientBaseGraph orientGraph, final OIndex rawIndex) {
     this.graph = orientGraph;
-    OIndexInternal rawIndexInternal = rawIndex.getInternal();
+    IndexInternal rawIndexInternal = rawIndex.getInternal();
     if (rawIndexInternal == null) {
       this.underlying = rawIndex;
-    } else if (rawIndexInternal instanceof OIndexTxAwareMultiValue) {
+    } else if (rawIndexInternal instanceof OIndexTxAwareMultiValueOriginal) {
       this.underlying = rawIndexInternal;
     } else {
-      this.underlying = new OIndexTxAwareMultiValue(orientGraph.getRawGraph(), rawIndexInternal);
+      this.underlying =
+          new OIndexTxAwareMultiValueOriginal(orientGraph.getRawGraph(), rawIndexInternal);
     }
 
     final ODocument metadata = rawIndex.getMetadata();
@@ -208,7 +209,7 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
 
     if (!db.getStorage().isRemote()) {
       this.recordKeyValueIndex =
-          new OIndexTxAwareOneValue(db, this.recordKeyValueIndex.getInternal());
+          new OIndexTxAwareOneValueOriginalKey(db, this.recordKeyValueIndex.getInternal());
     }
 
     final String className;
@@ -223,7 +224,7 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
     // CREATE THE MAP
     if (!db.getStorage().isRemote()) {
       this.underlying =
-          new OIndexTxAwareMultiValue(
+          new OIndexTxAwareMultiValueOriginal(
               db,
               db.getMetadata()
                   .getIndexManagerInternal()
@@ -274,9 +275,9 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
     else {
       final OIndex index =
           database.getMetadata().getIndexManagerInternal().getIndex(database, recordKeyValueMap);
-      final OIndexInternal indexInternal = index.getInternal();
+      final IndexInternal indexInternal = index.getInternal();
       if (indexInternal != null) {
-        recordKeyValueIndex = new OIndexTxAwareOneValue(database, indexInternal);
+        recordKeyValueIndex = new OIndexTxAwareOneValueOriginalKey(database, indexInternal);
       } else {
         recordKeyValueIndex = index;
       }
@@ -297,10 +298,11 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
                 null,
                 null,
                 null);
-    final OIndexInternal indexInternal = index.getInternal();
+    final IndexInternal indexInternal = index.getInternal();
     final OIndex recordKeyValueIndex;
     if (indexInternal != null) {
-      recordKeyValueIndex = new OIndexTxAwareOneValue(graph.getRawGraph(), indexInternal);
+      recordKeyValueIndex =
+          new OIndexTxAwareOneValueOriginalKey(graph.getRawGraph(), indexInternal);
     } else {
       recordKeyValueIndex = index;
     }

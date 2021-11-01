@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OIndexUnique extends OIndexOneValue {
+public class OIndexUnique extends IndexOneValueOriginaltKey {
 
   private final OBaseIndexEngine.Validator<Object, ORID> uniqueValidator =
       (key, oldValue, newValue) -> {
@@ -83,7 +83,7 @@ public class OIndexUnique extends OIndexOneValue {
   }
 
   @Override
-  public OIndexOneValue put(Object key, final OIdentifiable value) {
+  public IndexOneValueOriginaltKey put(Object key, final OIdentifiable value) {
     key = getCollatingValue(key);
 
     acquireSharedLock();

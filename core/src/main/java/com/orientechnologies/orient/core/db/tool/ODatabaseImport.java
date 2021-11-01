@@ -1422,6 +1422,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
               .field("value", record.getIdentity().toString())
               .save();
         }
+      } else {
+        recordsBeforeImport.remove(rid);
       }
 
       // import skipped records (too big to be imported before)

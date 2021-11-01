@@ -189,15 +189,14 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
           d.setLazyLoad(false);
           try {
             final boolean isMultiValue =
-                ODefaultIndexFactory.isMultiValueIndex(
-                    (String) d.field(OIndexInternal.CONFIG_TYPE));
+                ODefaultIndexFactory.isMultiValueIndex((String) d.field(IndexInternal.CONFIG_TYPE));
 
             final OIndexMetadata newIndexMetadata =
                 OIndexAbstract.loadMetadataInternal(
                     d,
-                    (String) d.field(OIndexInternal.CONFIG_TYPE),
-                    d.<String>field(OIndexInternal.ALGORITHM),
-                    d.<String>field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
+                    (String) d.field(IndexInternal.CONFIG_TYPE),
+                    d.<String>field(IndexInternal.ALGORITHM),
+                    d.<String>field(IndexInternal.VALUE_CONTAINER_ALGORITHM));
 
             addIndexInternal(
                 getRemoteIndexInstance(

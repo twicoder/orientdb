@@ -27,8 +27,8 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OIndexTxAwareDictionary extends OIndexTxAwareOneValue {
-  public OIndexTxAwareDictionary(ODatabaseDocumentInternal iDatabase, OIndexInternal delegate) {
+public class OIndexTxAwareDictionary extends OIndexTxAwareOneValueOriginalKey {
+  public OIndexTxAwareDictionary(ODatabaseDocumentInternal iDatabase, IndexInternal delegate) {
     super(iDatabase, delegate);
   }
 }

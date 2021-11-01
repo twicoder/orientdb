@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
@@ -37,17 +36,15 @@ import java.util.stream.Stream;
 /**
  * Generic abstract wrapper for indexes. It delegates all the operations to the wrapped OIndex
  * instance.
- *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OIndexAbstractDelegate implements OIndexInternal {
-  protected OIndexInternal delegate;
+public class OIndexAbstractDelegate implements IndexInternal {
+  protected IndexInternal delegate;
 
-  public OIndexAbstractDelegate(final OIndexInternal internal) {
+  public OIndexAbstractDelegate(final IndexInternal internal) {
     this.delegate = internal;
   }
 
-  public OIndexInternal getInternal() {
+  public IndexInternal getInternal() {
     return this;
   }
 
@@ -379,44 +376,6 @@ public class OIndexAbstractDelegate implements OIndexInternal {
   @Override
   public long size() {
     return delegate.size();
-  }
-
-  @Override
-  public Stream<ORawPair<Object, ORID>> stream() {
-    return delegate.stream();
-  }
-
-  @Override
-  public Stream<ORawPair<Object, ORID>> descStream() {
-    return delegate.descStream();
-  }
-
-  @Override
-  public Stream<Object> keyStream() {
-    return delegate.keyStream();
-  }
-
-  @Override
-  public Stream<ORawPair<Object, ORID>> streamEntriesBetween(
-      Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive, boolean ascOrder) {
-    return delegate.streamEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
-  }
-
-  @Override
-  public Stream<ORawPair<Object, ORID>> streamEntries(Collection<?> keys, boolean ascSortOrder) {
-    return delegate.streamEntries(keys, ascSortOrder);
-  }
-
-  @Override
-  public Stream<ORawPair<Object, ORID>> streamEntriesMajor(
-      Object fromKey, boolean fromInclusive, boolean ascOrder) {
-    return delegate.streamEntriesMajor(fromKey, fromInclusive, ascOrder);
-  }
-
-  @Override
-  public Stream<ORawPair<Object, ORID>> streamEntriesMinor(
-      Object toKey, boolean toInclusive, boolean ascOrder) {
-    return delegate.streamEntriesMinor(toKey, toInclusive, ascOrder);
   }
 
   @Override

@@ -27,11 +27,7 @@ import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.IndexStreamSecurityDecorator;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndexAbstract;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
@@ -50,7 +46,8 @@ import java.util.stream.Stream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.IndexSearcher;
 
-public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneIndex {
+public class OLuceneIndexNotUnique extends OIndexAbstract
+    implements OLuceneIndex, IndexInternalOriginalKey {
 
   public OLuceneIndexNotUnique(
       String name,
@@ -514,6 +511,17 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
       try {
         return IndexStreamSecurityDecorator.decorateStream(
             this, storage.getIndexStream(indexId, null));
+      } catch (OInvalidIndexEngineIdException e) {
+        doReloadIndexEngine();
+      }
+    }
+  }
+
+  @Override
+  public Stream<Object> keyStream() {
+    while (true) {
+      try {
+        return storage.getIndexKeyStream(indexId);
       } catch (OInvalidIndexEngineIdException e) {
         doReloadIndexEngine();
       }

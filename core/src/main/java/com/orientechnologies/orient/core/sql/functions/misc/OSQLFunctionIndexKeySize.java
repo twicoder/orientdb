@@ -24,8 +24,12 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.IndexInternal;
+import com.orientechnologies.orient.core.index.IndexInternalBinaryKey;
+import com.orientechnologies.orient.core.index.IndexInternalOriginalKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+import java.util.Arrays;
 import java.util.stream.Stream;
 
 /**
@@ -54,9 +58,43 @@ public class OSQLFunctionIndexKeySize extends OSQLFunctionAbstract {
     if (index == null) {
       return null;
     }
-    try (Stream<ORawPair<Object, ORID>> stream = index.getInternal().stream()) {
-      try (Stream<ORID> rids = index.getInternal().getRids(null)) {
-        return stream.map((pair) -> pair.first).distinct().count() + rids.count();
+
+    final IndexInternal indexInternal = index.getInternal();
+
+    if (indexInternal instanceof IndexInternalOriginalKey) {
+      try (Stream<ORawPair<Object, ORID>> stream =
+          ((IndexInternalOriginalKey) indexInternal).stream()) {
+        try (Stream<ORID> rids = index.getInternal().getRids(null)) {
+          return stream.map((pair) -> pair.first).distinct().count() + rids.count();
+        }
+      }
+    } else {
+      final class KeyWrapper {
+        private final byte[] key;
+
+        KeyWrapper(byte[] key) {
+          this.key = key;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+          if (this == o) return true;
+          if (o == null || getClass() != o.getClass()) return false;
+          KeyWrapper that = (KeyWrapper) o;
+          return Arrays.equals(key, that.key);
+        }
+
+        @Override
+        public int hashCode() {
+          return Arrays.hashCode(key);
+        }
+      }
+
+      try (Stream<ORawPair<byte[], ORID>> stream =
+          ((IndexInternalBinaryKey) indexInternal).stream()) {
+        try (Stream<ORID> rids = index.getInternal().getRids(null)) {
+          return stream.map((pair) -> new KeyWrapper(pair.first)).distinct().count() + rids.count();
+        }
       }
     }
   }

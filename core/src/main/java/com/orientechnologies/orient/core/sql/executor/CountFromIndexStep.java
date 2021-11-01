@@ -3,7 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.IndexInternal;
 import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
 import java.util.Map;
 import java.util.Optional;
@@ -52,7 +52,7 @@ public class CountFromIndexStep extends AbstractExecutionStep {
         long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
           final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
-          OIndexInternal idx =
+          IndexInternal idx =
               database
                   .getMetadata()
                   .getIndexManagerInternal()

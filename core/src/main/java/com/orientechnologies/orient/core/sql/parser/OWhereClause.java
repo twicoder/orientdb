@@ -8,11 +8,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -155,12 +151,23 @@ public class OWhereClause extends SimpleNode {
           return rids.count();
         }
       } else if (index.supportsOrderedIterations()) {
-        final Spliterator<ORawPair<Object, ORID>> spliterator;
-
-        try (Stream<ORawPair<Object, ORID>> stream =
-            index.getInternal().streamEntriesBetween(key, true, key, true, true)) {
-          spliterator = stream.spliterator();
-          return spliterator.estimateSize();
+        final IndexInternal indexInternal = index.getInternal();
+        if (indexInternal instanceof IndexInternalOriginalKey) {
+          final IndexInternalOriginalKey indexInternalOriginalKey =
+              (IndexInternalOriginalKey) indexInternal;
+          try (Stream<ORawPair<Object, ORID>> stream =
+              indexInternalOriginalKey.streamEntriesBetween(key, true, key, true, true)) {
+            final Spliterator<ORawPair<Object, ORID>> spliterator = stream.spliterator();
+            return spliterator.estimateSize();
+          }
+        } else {
+          final IndexInternalBinaryKey indexInternalBinaryKey =
+              (IndexInternalBinaryKey) indexInternal;
+          try (Stream<ORawPair<byte[], ORID>> stream =
+              indexInternalBinaryKey.streamEntriesBetween(key, true, key, true, true)) {
+            final Spliterator<ORawPair<byte[], ORID>> spliterator = stream.spliterator();
+            return spliterator.estimateSize();
+          }
         }
       }
     }

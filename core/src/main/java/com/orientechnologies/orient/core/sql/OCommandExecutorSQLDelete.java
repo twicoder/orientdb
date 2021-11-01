@@ -31,11 +31,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndexAbstract;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -229,12 +225,16 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
       if (compiledFilter != null) compiledFilter.bindParameters(iArgs);
 
       final ODatabaseDocumentInternal database = getDatabase();
-      final OIndexInternal index =
+      final IndexInternal index =
           database
               .getMetadata()
               .getIndexManagerInternal()
               .getIndex(database, indexName)
               .getInternal();
+
+      if (index instanceof IndexInternalBinaryKey) {
+        throw new OCommandExecutionException("Binary indexes are not supported by old executor");
+      }
       if (index == null)
         throw new OCommandExecutionException("Target index '" + indexName + "' not found");
 
@@ -251,7 +251,8 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
           return total;
         } else {
           // RETURNS ALL THE DELETED RECORDS
-          Iterator<ORawPair<Object, ORID>> cursor = index.stream().iterator();
+          Iterator<ORawPair<Object, ORID>> cursor =
+              ((IndexInternalOriginalKey) index).stream().iterator();
 
           while (cursor.hasNext()) {
             final ORawPair<Object, ORID> entry = cursor.next();

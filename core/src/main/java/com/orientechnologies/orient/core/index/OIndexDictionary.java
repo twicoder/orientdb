@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OIndexDictionary extends OIndexOneValue {
+public class OIndexDictionary extends IndexOneValueOriginaltKey {
 
   public OIndexDictionary(
       String name,
@@ -54,7 +54,7 @@ public class OIndexDictionary extends OIndexOneValue {
         binaryFormatVersion);
   }
 
-  public OIndexOneValue put(Object key, final OIdentifiable value) {
+  public IndexOneValueOriginaltKey put(Object key, final OIdentifiable value) {
 
     key = getCollatingValue(key);
 

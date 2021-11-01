@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.IndexInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -8,10 +9,8 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.domain.whiz.Mapper;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -78,29 +77,21 @@ public class MapIndexTest extends ObjectDBBaseTest {
     mapper.setIntMap(map);
     database.save(mapper);
 
-    final OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.getInternal().size(), 2);
-    try (final Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
-      final Iterator<Object> keyIterator = keyStream.iterator();
-      while (keyIterator.hasNext()) {
-        final String key = (String) keyIterator.next();
-        if (!key.equals("key1") && !key.equals("key2")) {
-          Assert.fail("Unknown key found: " + key);
-        }
-      }
-    }
+    final OIndex keyIndexMap = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndexMap.getInternal().size(), 2);
 
-    final OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getInternal().size(), 2);
-    try (final Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
-      final Iterator<Object> valuesIterator = valueStream.iterator();
-      while (valuesIterator.hasNext()) {
-        final Integer value = (Integer) valuesIterator.next();
-        if (!value.equals(10) && !value.equals(20)) {
-          Assert.fail("Unknown value found: " + value);
-        }
-      }
-    }
+    final IndexInternal indexKeyInternal = keyIndexMap.getInternal();
+
+    Assert.assertTrue(indexKeyInternal.getRids("key1").findAny().isPresent());
+    Assert.assertTrue(indexKeyInternal.getRids("key2").findAny().isPresent());
+
+    final OIndex valueIndexMap = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndexMap.getInternal().size(), 2);
+
+    final IndexInternal indexValueInternal = valueIndexMap.getInternal();
+
+    Assert.assertTrue(indexValueInternal.getRids(10).findAny().isPresent());
+    Assert.assertTrue(indexValueInternal.getRids(20).findAny().isPresent());
   }
 
   public void testIndexMapInTx() {
@@ -122,35 +113,21 @@ public class MapIndexTest extends ObjectDBBaseTest {
       throw e;
     }
 
-    OIndex keyIndex = getIndex("mapIndexTestKey");
+    final OIndex keyIndexMap = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndexMap.getInternal().size(), 2);
 
-    Assert.assertEquals(keyIndex.getInternal().size(), 2);
-    Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
-      keysIterator = keyStream.iterator();
+    final IndexInternal indexKeyInternal = keyIndexMap.getInternal();
 
-      while (keysIterator.hasNext()) {
-        String key = (String) keysIterator.next();
-        if (!key.equals("key1") && !key.equals("key2")) {
-          Assert.fail("Unknown key found: " + key);
-        }
-      }
-    }
+    Assert.assertTrue(indexKeyInternal.getRids("key1").findAny().isPresent());
+    Assert.assertTrue(indexKeyInternal.getRids("key2").findAny().isPresent());
 
-    OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getInternal().size(), 2);
+    final OIndex valueIndexMap = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndexMap.getInternal().size(), 2);
 
-    Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
-      valuesIterator = valueStream.iterator();
+    final IndexInternal indexValueInternal = valueIndexMap.getInternal();
 
-      while (valuesIterator.hasNext()) {
-        Integer value = (Integer) valuesIterator.next();
-        if (!value.equals(10) && !value.equals(20)) {
-          Assert.fail("Unknown value found: " + value);
-        }
-      }
-    }
+    Assert.assertTrue(indexValueInternal.getRids(10).findAny().isPresent());
+    Assert.assertTrue(indexValueInternal.getRids(20).findAny().isPresent());
   }
 
   public void testIndexMapUpdateOne() {
@@ -177,32 +154,21 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
     Assert.assertEquals(keyIndex.getInternal().size(), 2);
 
-    Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
-      keysIterator = keyStream.iterator();
+    final OIndex keyIndexMap = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndexMap.getInternal().size(), 2);
 
-      while (keysIterator.hasNext()) {
-        String key = (String) keysIterator.next();
-        if (!key.equals("key2") && !key.equals("key3")) {
-          Assert.fail("Unknown key found: " + key);
-        }
-      }
-    }
+    final IndexInternal indexKeyInternal = keyIndexMap.getInternal();
 
-    OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getInternal().size(), 2);
+    Assert.assertTrue(indexKeyInternal.getRids("key2").findAny().isPresent());
+    Assert.assertTrue(indexKeyInternal.getRids("key3").findAny().isPresent());
 
-    Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
-      valuesIterator = valueStream.iterator();
+    final OIndex valueIndexMap = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndexMap.getInternal().size(), 2);
 
-      while (valuesIterator.hasNext()) {
-        Integer value = (Integer) valuesIterator.next();
-        if (!value.equals(30) && !value.equals(20)) {
-          Assert.fail("Unknown key found: " + value);
-        }
-      }
-    }
+    final IndexInternal indexValueInternal = valueIndexMap.getInternal();
+
+    Assert.assertTrue(indexValueInternal.getRids(20).findAny().isPresent());
+    Assert.assertTrue(indexValueInternal.getRids(30).findAny().isPresent());
   }
 
   public void testIndexMapUpdateOneTx() {
@@ -232,36 +198,21 @@ public class MapIndexTest extends ObjectDBBaseTest {
       throw e;
     }
 
-    OIndex keyIndex = getIndex("mapIndexTestKey");
+    final OIndex keyIndexMap = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndexMap.getInternal().size(), 2);
 
-    Assert.assertEquals(keyIndex.getInternal().size(), 2);
+    final IndexInternal indexKeyInternal = keyIndexMap.getInternal();
 
-    Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
-      keysIterator = keyStream.iterator();
+    Assert.assertTrue(indexKeyInternal.getRids("key2").findAny().isPresent());
+    Assert.assertTrue(indexKeyInternal.getRids("key3").findAny().isPresent());
 
-      while (keysIterator.hasNext()) {
-        String key = (String) keysIterator.next();
-        if (!key.equals("key2") && !key.equals("key3")) {
-          Assert.fail("Unknown key found: " + key);
-        }
-      }
-    }
+    final OIndex valueIndexMap = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndexMap.getInternal().size(), 2);
 
-    OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getInternal().size(), 2);
+    final IndexInternal indexValueInternal = valueIndexMap.getInternal();
 
-    Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
-      valuesIterator = valueStream.iterator();
-
-      while (valuesIterator.hasNext()) {
-        Integer value = (Integer) valuesIterator.next();
-        if (!value.equals(30) && !value.equals(20)) {
-          Assert.fail("Unknown key found: " + value);
-        }
-      }
-    }
+    Assert.assertTrue(indexValueInternal.getRids(20).findAny().isPresent());
+    Assert.assertTrue(indexValueInternal.getRids(30).findAny().isPresent());
   }
 
   public void testIndexMapUpdateOneTxRollback() {
@@ -286,35 +237,21 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.save(mapper);
     database.rollback();
 
-    OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.getInternal().size(), 2);
+    final OIndex keyIndexMap = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndexMap.getInternal().size(), 2);
 
-    Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
-      keysIterator = keyStream.iterator();
+    final IndexInternal indexKeyInternal = keyIndexMap.getInternal();
 
-      while (keysIterator.hasNext()) {
-        String key = (String) keysIterator.next();
-        if (!key.equals("key2") && !key.equals("key1")) {
-          Assert.fail("Unknown key found: " + key);
-        }
-      }
-    }
+    Assert.assertTrue(indexKeyInternal.getRids("key1").findAny().isPresent());
+    Assert.assertTrue(indexKeyInternal.getRids("key2").findAny().isPresent());
 
-    OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getInternal().size(), 2);
+    final OIndex valueIndexMap = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndexMap.getInternal().size(), 2);
 
-    Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
-      valuesIterator = valueStream.iterator();
+    final IndexInternal indexValueInternal = valueIndexMap.getInternal();
 
-      while (valuesIterator.hasNext()) {
-        Integer value = (Integer) valuesIterator.next();
-        if (!value.equals(10) && !value.equals(20)) {
-          Assert.fail("Unknown key found: " + value);
-        }
-      }
-    }
+    Assert.assertTrue(indexValueInternal.getRids(10).findAny().isPresent());
+    Assert.assertTrue(indexValueInternal.getRids(20).findAny().isPresent());
   }
 
   public void testIndexMapAddItem() {
@@ -333,35 +270,23 @@ public class MapIndexTest extends ObjectDBBaseTest {
         .command(new OCommandSQL("UPDATE " + mapper.getId() + " put intMap = 'key3', 30"))
         .execute();
 
-    OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.getInternal().size(), 3);
+    final OIndex keyIndexMap = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndexMap.getInternal().size(), 3);
 
-    Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
-      keysIterator = keyStream.iterator();
+    final IndexInternal indexKeyInternal = keyIndexMap.getInternal();
 
-      while (keysIterator.hasNext()) {
-        String key = (String) keysIterator.next();
-        if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
-          Assert.fail("Unknown key found: " + key);
-        }
-      }
-    }
+    Assert.assertTrue(indexKeyInternal.getRids("key1").findAny().isPresent());
+    Assert.assertTrue(indexKeyInternal.getRids("key2").findAny().isPresent());
+    Assert.assertTrue(indexKeyInternal.getRids("key3").findAny().isPresent());
 
-    OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getInternal().size(), 3);
+    final OIndex valueIndexMap = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndexMap.getInternal().size(), 3);
 
-    Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
-      valuesIterator = valueStream.iterator();
+    final IndexInternal indexValueInternal = valueIndexMap.getInternal();
 
-      while (valuesIterator.hasNext()) {
-        Integer value = (Integer) valuesIterator.next();
-        if (!value.equals(30) && !value.equals(20) && !value.equals(10)) {
-          Assert.fail("Unknown value found: " + value);
-        }
-      }
-    }
+    Assert.assertTrue(indexValueInternal.getRids(10).findAny().isPresent());
+    Assert.assertTrue(indexValueInternal.getRids(20).findAny().isPresent());
+    Assert.assertTrue(indexValueInternal.getRids(30).findAny().isPresent());
   }
 
   public void testIndexMapAddItemTx() {
@@ -388,35 +313,23 @@ public class MapIndexTest extends ObjectDBBaseTest {
       throw e;
     }
 
-    OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.getInternal().size(), 3);
+    final OIndex keyIndexMap = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndexMap.getInternal().size(), 3);
 
-    Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
-      keysIterator = keyStream.iterator();
+    final IndexInternal indexKeyInternal = keyIndexMap.getInternal();
 
-      while (keysIterator.hasNext()) {
-        String key = (String) keysIterator.next();
-        if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
-          Assert.fail("Unknown key found: " + key);
-        }
-      }
-    }
+    Assert.assertTrue(indexKeyInternal.getRids("key1").findAny().isPresent());
+    Assert.assertTrue(indexKeyInternal.getRids("key2").findAny().isPresent());
+    Assert.assertTrue(indexKeyInternal.getRids("key3").findAny().isPresent());
 
-    OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getInternal().size(), 3);
+    final OIndex valueIndexMap = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndexMap.getInternal().size(), 3);
 
-    Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
-      valuesIterator = valueStream.iterator();
+    final IndexInternal indexValueInternal = valueIndexMap.getInternal();
 
-      while (valuesIterator.hasNext()) {
-        Integer value = (Integer) valuesIterator.next();
-        if (!value.equals(30) && !value.equals(20) && !value.equals(10)) {
-          Assert.fail("Unknown value found: " + value);
-        }
-      }
-    }
+    Assert.assertTrue(indexValueInternal.getRids(10).findAny().isPresent());
+    Assert.assertTrue(indexValueInternal.getRids(20).findAny().isPresent());
+    Assert.assertTrue(indexValueInternal.getRids(30).findAny().isPresent());
   }
 
   public void testIndexMapAddItemTxRollback() {
@@ -437,36 +350,21 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.save(loadedMapper);
     database.rollback();
 
-    OIndex keyIndex = getIndex("mapIndexTestKey");
+    final OIndex keyIndexMap = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndexMap.getInternal().size(), 2);
 
-    Assert.assertEquals(keyIndex.getInternal().size(), 2);
+    final IndexInternal indexKeyInternal = keyIndexMap.getInternal();
 
-    Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
-      keysIterator = keyStream.iterator();
+    Assert.assertTrue(indexKeyInternal.getRids("key1").findAny().isPresent());
+    Assert.assertTrue(indexKeyInternal.getRids("key2").findAny().isPresent());
 
-      while (keysIterator.hasNext()) {
-        String key = (String) keysIterator.next();
-        if (!key.equals("key1") && !key.equals("key2")) {
-          Assert.fail("Unknown key found: " + key);
-        }
-      }
-    }
+    final OIndex valueIndexMap = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndexMap.getInternal().size(), 2);
 
-    OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getInternal().size(), 2);
+    final IndexInternal indexValueInternal = valueIndexMap.getInternal();
 
-    Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
-      valuesIterator = valueStream.iterator();
-
-      while (valuesIterator.hasNext()) {
-        Integer value = (Integer) valuesIterator.next();
-        if (!value.equals(20) && !value.equals(10)) {
-          Assert.fail("Unknown key found: " + value);
-        }
-      }
-    }
+    Assert.assertTrue(indexValueInternal.getRids(10).findAny().isPresent());
+    Assert.assertTrue(indexValueInternal.getRids(20).findAny().isPresent());
   }
 
   public void testIndexMapUpdateItem() {
@@ -485,36 +383,21 @@ public class MapIndexTest extends ObjectDBBaseTest {
         .command(new OCommandSQL("UPDATE " + mapper.getId() + " put intMap = 'key2', 40"))
         .execute();
 
-    OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.getInternal().size(), 2);
+    final OIndex keyIndexMap = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndexMap.getInternal().size(), 2);
 
-    Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
-      keysIterator = keyStream.iterator();
+    final IndexInternal indexKeyInternal = keyIndexMap.getInternal();
 
-      while (keysIterator.hasNext()) {
-        String key = (String) keysIterator.next();
-        if (!key.equals("key1") && !key.equals("key2")) {
-          Assert.fail("Unknown key found: " + key);
-        }
-      }
-    }
+    Assert.assertTrue(indexKeyInternal.getRids("key1").findAny().isPresent());
+    Assert.assertTrue(indexKeyInternal.getRids("key2").findAny().isPresent());
 
-    OIndex valueIndex = getIndex("mapIndexTestValue");
+    final OIndex valueIndexMap = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndexMap.getInternal().size(), 2);
 
-    Assert.assertEquals(valueIndex.getInternal().size(), 2);
+    final IndexInternal indexValueInternal = valueIndexMap.getInternal();
 
-    Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
-      valuesIterator = valueStream.iterator();
-
-      while (valuesIterator.hasNext()) {
-        Integer value = (Integer) valuesIterator.next();
-        if (!value.equals(10) && !value.equals(40)) {
-          Assert.fail("Unknown key found: " + value);
-        }
-      }
-    }
+    Assert.assertTrue(indexValueInternal.getRids(10).findAny().isPresent());
+    Assert.assertTrue(indexValueInternal.getRids(40).findAny().isPresent());
   }
 
   public void testIndexMapUpdateItemInTx() {
@@ -540,35 +423,21 @@ public class MapIndexTest extends ObjectDBBaseTest {
       throw e;
     }
 
-    OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.getInternal().size(), 2);
+    final OIndex keyIndexMap = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndexMap.getInternal().size(), 2);
 
-    Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
-      keysIterator = keyStream.iterator();
+    final IndexInternal indexKeyInternal = keyIndexMap.getInternal();
 
-      while (keysIterator.hasNext()) {
-        String key = (String) keysIterator.next();
-        if (!key.equals("key1") && !key.equals("key2")) {
-          Assert.fail("Unknown key found: " + key);
-        }
-      }
-    }
+    Assert.assertTrue(indexKeyInternal.getRids("key1").findAny().isPresent());
+    Assert.assertTrue(indexKeyInternal.getRids("key2").findAny().isPresent());
 
-    OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getInternal().size(), 2);
+    final OIndex valueIndexMap = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndexMap.getInternal().size(), 2);
 
-    Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
-      valuesIterator = valueStream.iterator();
+    final IndexInternal indexValueInternal = valueIndexMap.getInternal();
 
-      while (valuesIterator.hasNext()) {
-        Integer value = (Integer) valuesIterator.next();
-        if (!value.equals(10) && !value.equals(40)) {
-          Assert.fail("Unknown value found: " + value);
-        }
-      }
-    }
+    Assert.assertTrue(indexValueInternal.getRids(10).findAny().isPresent());
+    Assert.assertTrue(indexValueInternal.getRids(40).findAny().isPresent());
   }
 
   public void testIndexMapUpdateItemInTxRollback() {
@@ -589,35 +458,21 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.save(loadedMapper);
     database.rollback();
 
-    OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.getInternal().size(), 2);
+    final OIndex keyIndexMap = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndexMap.getInternal().size(), 2);
 
-    Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
-      keysIterator = keyStream.iterator();
+    final IndexInternal indexKeyInternal = keyIndexMap.getInternal();
 
-      while (keysIterator.hasNext()) {
-        String key = (String) keysIterator.next();
-        if (!key.equals("key1") && !key.equals("key2")) {
-          Assert.fail("Unknown key found: " + key);
-        }
-      }
-    }
+    Assert.assertTrue(indexKeyInternal.getRids("key1").findAny().isPresent());
+    Assert.assertTrue(indexKeyInternal.getRids("key2").findAny().isPresent());
 
-    OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getInternal().size(), 2);
+    final OIndex valueIndexMap = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndexMap.getInternal().size(), 2);
 
-    Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
-      valuesIterator = valueStream.iterator();
+    final IndexInternal indexValueInternal = valueIndexMap.getInternal();
 
-      while (valuesIterator.hasNext()) {
-        Integer value = (Integer) valuesIterator.next();
-        if (!value.equals(10) && !value.equals(20)) {
-          Assert.fail("Unknown value found: " + value);
-        }
-      }
-    }
+    Assert.assertTrue(indexValueInternal.getRids(10).findAny().isPresent());
+    Assert.assertTrue(indexValueInternal.getRids(20).findAny().isPresent());
   }
 
   public void testIndexMapRemoveItem() {
@@ -637,35 +492,21 @@ public class MapIndexTest extends ObjectDBBaseTest {
         .command(new OCommandSQL("UPDATE " + mapper.getId() + " remove intMap = 'key2'"))
         .execute();
 
-    OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.getInternal().size(), 2);
+    final OIndex keyIndexMap = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndexMap.getInternal().size(), 2);
 
-    Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
-      keysIterator = keyStream.iterator();
+    final IndexInternal indexKeyInternal = keyIndexMap.getInternal();
 
-      while (keysIterator.hasNext()) {
-        String key = (String) keysIterator.next();
-        if (!key.equals("key1") && !key.equals("key3")) {
-          Assert.fail("Unknown key found: " + key);
-        }
-      }
-    }
+    Assert.assertTrue(indexKeyInternal.getRids("key1").findAny().isPresent());
+    Assert.assertTrue(indexKeyInternal.getRids("key3").findAny().isPresent());
 
-    OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getInternal().size(), 2);
+    final OIndex valueIndexMap = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndexMap.getInternal().size(), 2);
 
-    Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
-      valuesIterator = valueStream.iterator();
+    final IndexInternal indexValueInternal = valueIndexMap.getInternal();
 
-      while (valuesIterator.hasNext()) {
-        Integer value = (Integer) valuesIterator.next();
-        if (!value.equals(10) && !value.equals(30)) {
-          Assert.fail("Unknown value found: " + value);
-        }
-      }
-    }
+    Assert.assertTrue(indexValueInternal.getRids(10).findAny().isPresent());
+    Assert.assertTrue(indexValueInternal.getRids(30).findAny().isPresent());
   }
 
   public void testIndexMapRemoveItemInTx() {
@@ -692,35 +533,21 @@ public class MapIndexTest extends ObjectDBBaseTest {
       throw e;
     }
 
-    OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.getInternal().size(), 2);
+    final OIndex keyIndexMap = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndexMap.getInternal().size(), 2);
 
-    Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
-      keysIterator = keyStream.iterator();
+    final IndexInternal indexKeyInternal = keyIndexMap.getInternal();
 
-      while (keysIterator.hasNext()) {
-        String key = (String) keysIterator.next();
-        if (!key.equals("key1") && !key.equals("key3")) {
-          Assert.fail("Unknown key found: " + key);
-        }
-      }
-    }
+    Assert.assertTrue(indexKeyInternal.getRids("key1").findAny().isPresent());
+    Assert.assertTrue(indexKeyInternal.getRids("key3").findAny().isPresent());
 
-    OIndex valueIndex = getIndex("mapIndexTestValue");
+    final OIndex valueIndexMap = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndexMap.getInternal().size(), 2);
 
-    Assert.assertEquals(valueIndex.getInternal().size(), 2);
-    Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
-      valuesIterator = valueStream.iterator();
+    final IndexInternal indexValueInternal = valueIndexMap.getInternal();
 
-      while (valuesIterator.hasNext()) {
-        Integer value = (Integer) valuesIterator.next();
-        if (!value.equals(10) && !value.equals(30)) {
-          Assert.fail("Unknown value found: " + value);
-        }
-      }
-    }
+    Assert.assertTrue(indexValueInternal.getRids(10).findAny().isPresent());
+    Assert.assertTrue(indexValueInternal.getRids(30).findAny().isPresent());
   }
 
   public void testIndexMapRemoveItemInTxRollback() {
@@ -742,35 +569,23 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.save(loadedMapper);
     database.rollback();
 
-    OIndex keyIndex = getIndex("mapIndexTestKey");
+    final OIndex keyIndexMap = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndexMap.getInternal().size(), 3);
 
-    Assert.assertEquals(keyIndex.getInternal().size(), 3);
-    Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
-      keysIterator = keyStream.iterator();
+    final IndexInternal indexKeyInternal = keyIndexMap.getInternal();
 
-      while (keysIterator.hasNext()) {
-        String key = (String) keysIterator.next();
-        if (!key.equals("key1") && !key.equals("key2") && !key.equals("key3")) {
-          Assert.fail("Unknown key found: " + key);
-        }
-      }
-    }
+    Assert.assertTrue(indexKeyInternal.getRids("key1").findAny().isPresent());
+    Assert.assertTrue(indexKeyInternal.getRids("key2").findAny().isPresent());
+    Assert.assertTrue(indexKeyInternal.getRids("key3").findAny().isPresent());
 
-    OIndex valueIndex = getIndex("mapIndexTestValue");
+    final OIndex valueIndexMap = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndexMap.getInternal().size(), 3);
 
-    Assert.assertEquals(valueIndex.getInternal().size(), 3);
-    Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
-      valuesIterator = valueStream.iterator();
+    final IndexInternal indexValueInternal = valueIndexMap.getInternal();
 
-      while (valuesIterator.hasNext()) {
-        Integer value = (Integer) valuesIterator.next();
-        if (!value.equals(10) && !value.equals(20) && !value.equals(30)) {
-          Assert.fail("Unknown key found: " + value);
-        }
-      }
-    }
+    Assert.assertTrue(indexValueInternal.getRids(10).findAny().isPresent());
+    Assert.assertTrue(indexValueInternal.getRids(20).findAny().isPresent());
+    Assert.assertTrue(indexValueInternal.getRids(30).findAny().isPresent());
   }
 
   public void testIndexMapRemove() {
@@ -838,35 +653,21 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.delete(mapper);
     database.rollback();
 
-    OIndex keyIndex = getIndex("mapIndexTestKey");
-    Assert.assertEquals(keyIndex.getInternal().size(), 2);
+    final OIndex keyIndexMap = getIndex("mapIndexTestKey");
+    Assert.assertEquals(keyIndexMap.getInternal().size(), 2);
 
-    Iterator<Object> keysIterator;
-    try (Stream<Object> keyStream = keyIndex.getInternal().keyStream()) {
-      keysIterator = keyStream.iterator();
+    final IndexInternal indexKeyInternal = keyIndexMap.getInternal();
 
-      while (keysIterator.hasNext()) {
-        String key = (String) keysIterator.next();
-        if (!key.equals("key1") && !key.equals("key2")) {
-          Assert.fail("Unknown key found: " + key);
-        }
-      }
-    }
+    Assert.assertTrue(indexKeyInternal.getRids("key1").findAny().isPresent());
+    Assert.assertTrue(indexKeyInternal.getRids("key2").findAny().isPresent());
 
-    OIndex valueIndex = getIndex("mapIndexTestValue");
-    Assert.assertEquals(valueIndex.getInternal().size(), 2);
+    final OIndex valueIndexMap = getIndex("mapIndexTestValue");
+    Assert.assertEquals(valueIndexMap.getInternal().size(), 2);
 
-    Iterator<Object> valuesIterator;
-    try (Stream<Object> valueStream = valueIndex.getInternal().keyStream()) {
-      valuesIterator = valueStream.iterator();
+    final IndexInternal indexValueInternal = valueIndexMap.getInternal();
 
-      while (valuesIterator.hasNext()) {
-        Integer value = (Integer) valuesIterator.next();
-        if (!value.equals(10) && !value.equals(20)) {
-          Assert.fail("Unknown value found: " + value);
-        }
-      }
-    }
+    Assert.assertTrue(indexValueInternal.getRids(10).findAny().isPresent());
+    Assert.assertTrue(indexValueInternal.getRids(20).findAny().isPresent());
   }
 
   public void testIndexMapSQL() {

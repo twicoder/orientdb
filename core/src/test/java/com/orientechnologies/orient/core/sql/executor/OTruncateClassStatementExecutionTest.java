@@ -1,10 +1,10 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.IndexInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
@@ -15,7 +15,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -66,18 +65,17 @@ public class OTruncateClassStatementExecutionTest {
 
     Set<Integer> set = new HashSet<Integer>();
     while (result.hasNext()) {
-      set.addAll((Collection<Integer>) result.next().getProperty("data"));
+      set.addAll(result.next().getProperty("data"));
     }
     result.close();
     Assert.assertTrue(set.containsAll(Arrays.asList(5, 6, 7, 8, 9, -1)));
 
     Assert.assertEquals(index.getInternal().size(), 6);
 
-    try (Stream<ORawPair<Object, ORID>> stream = index.getInternal().stream()) {
-      stream.forEach(
-          (entry) -> {
-            Assert.assertTrue(set.contains((Integer) entry.first));
-          });
+    final IndexInternal indexInternal = index.getInternal();
+    for (final Integer key : set) {
+      final Stream<ORID> rids = indexInternal.getRids(key);
+      Assert.assertTrue(rids.findFirst().isPresent());
     }
 
     schema.dropClass("test_class");

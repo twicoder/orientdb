@@ -100,7 +100,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
     return ALGORITHMS;
   }
 
-  public OIndexInternal createIndex(
+  public IndexInternal createIndex(
       String name,
       OStorage storage,
       String indexType,
@@ -127,7 +127,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
         algorithm);
   }
 
-  private static OIndexInternal createSBTreeIndex(
+  private static IndexInternal createSBTreeIndex(
       String name,
       String indexType,
       String valueContainerAlgorithm,

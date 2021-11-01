@@ -23,11 +23,9 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
@@ -39,11 +37,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
-/**
- * BETWEEN operator.
- *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- */
+/** BETWEEN operator. */
 public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
   private boolean leftInclusive = true;
   private boolean rightInclusive = true;
@@ -135,7 +129,11 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     Stream<ORawPair<Object, ORID>> stream;
-    final OIndexInternal internalIndex = index.getInternal();
+    final IndexInternal internalIndex = index.getInternal();
+    if (internalIndex instanceof IndexInternalBinaryKey) {
+      throw new OCommandExecutionException("Binary indexes are not supported by old executor");
+    }
+
     if (!internalIndex.canBeUsedInEqualityOperators() || !internalIndex.hasRangeQuerySupport())
       return null;
 
@@ -152,8 +150,7 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       if (keyOne == null || keyTwo == null) return null;
 
       stream =
-          index
-              .getInternal()
+          ((IndexInternalOriginalKey) internalIndex)
               .streamEntriesBetween(keyOne, leftInclusive, keyTwo, rightInclusive, ascSortOrder);
     } else {
       final OCompositeIndexDefinition compositeIndexDefinition =
@@ -186,8 +183,7 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       if (keyTwo == null) return null;
 
       stream =
-          index
-              .getInternal()
+          ((IndexInternalOriginalKey) internalIndex)
               .streamEntriesBetween(keyOne, leftInclusive, keyTwo, rightInclusive, ascSortOrder);
     }
 

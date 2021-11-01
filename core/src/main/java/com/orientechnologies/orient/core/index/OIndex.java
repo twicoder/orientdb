@@ -27,11 +27,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.Collection;
 import java.util.Set;
 
-/**
- * Basic interface to handle index.
- *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- */
+/** Basic interface to handle index. */
 public interface OIndex extends Comparable<OIndex> {
   String MERGE_KEYS = "mergeKeys";
 
@@ -57,7 +53,7 @@ public interface OIndex extends Comparable<OIndex> {
    *
    * @param key The key to search
    * @return The Record set if found, otherwise an empty Set
-   * @deprecated Use {@link OIndexInternal#getRids(Object)} instead, but only as internal (not
+   * @deprecated Use {@link IndexInternal#getRids(Object)} instead, but only as internal (not
    *     public) API.
    */
   @Deprecated
@@ -99,7 +95,7 @@ public interface OIndex extends Comparable<OIndex> {
 
   /**
    * @return number of entries in the index.
-   * @deprecated Use {@link OIndexInternal#size()} instead. This API only for internal use !.
+   * @deprecated Use {@link IndexInternal#size()} instead. This API only for internal use !.
    */
   @Deprecated
   long getSize();
@@ -227,7 +223,7 @@ public interface OIndex extends Comparable<OIndex> {
   ODocument getConfiguration();
 
   /** Returns the internal index used. */
-  OIndexInternal getInternal();
+  IndexInternal getInternal();
 
   OIndexDefinition getDefinition();
 
@@ -245,8 +241,8 @@ public interface OIndex extends Comparable<OIndex> {
    * @param ascSortOrder Flag which determines whether data iterated by cursor should be in
    *     ascending or descending order.
    * @return cursor which presents data associated with passed in keys.
-   * @deprecated Use {@link OIndexInternal#streamEntries(Collection, boolean)} instead. This API
-   *     only for internal use !
+   * @deprecated Use {@link IndexInternal#streamEntries(Collection, boolean)} instead. This API only
+   *     for internal use !
    */
   @Deprecated
   OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder);
@@ -261,7 +257,7 @@ public interface OIndex extends Comparable<OIndex> {
    * @param ascOrder Flag which determines whether data iterated by cursor should be in ascending or
    *     descending order.
    * @return Cursor which presents subset of index data between passed in keys.
-   * @deprecated Use {@link OIndexInternal#streamEntriesBetween(Object, boolean, Object, boolean,
+   * @deprecated Use {@link IndexInternal#streamEntriesBetween(Object, boolean, Object, boolean,
    *     boolean)} instead. This API only * for internal use !
    */
   @Deprecated
@@ -278,7 +274,7 @@ public interface OIndex extends Comparable<OIndex> {
    *     descending order.
    * @return cursor which presents subset of data which associated with key which is greater than
    *     passed in key.
-   * @deprecated Use {@link OIndexInternal#streamEntriesMajor(Object, boolean, boolean)} instead.
+   * @deprecated Use {@link IndexInternal#streamEntriesMajor(Object, boolean, boolean)} instead.
    *     This API only for internal use !
    */
   @Deprecated
@@ -294,7 +290,7 @@ public interface OIndex extends Comparable<OIndex> {
    *     descending order.
    * @return cursor which presents subset of data which associated with key which is less than
    *     passed in key.
-   * @deprecated Use {@link OIndexInternal#streamEntriesMinor(Object, boolean, boolean)} instead.
+   * @deprecated Use {@link IndexInternal#streamEntriesMinor(Object, boolean, boolean)} instead.
    *     This API only for internal use !
    */
   @Deprecated

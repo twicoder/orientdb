@@ -154,7 +154,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
     final String valueContainerAlgorithm = chooseContainerAlgorithm(type);
 
-    final OIndexInternal index;
+    final IndexInternal index;
     acquireExclusiveLock();
     try {
 
@@ -346,7 +346,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       final OTrackedSet<ODocument> indexes = new OTrackedSet<>(document);
 
       for (final OIndex i : this.indexes.values()) {
-        indexes.add(((OIndexInternal) i).updateConfiguration());
+        indexes.add(((IndexInternal) i).updateConfiguration());
       }
       document.field(CONFIG_INDEXES, indexes, OType.EMBEDDEDSET);
       document.setDirty();
@@ -424,23 +424,23 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       final Collection<ODocument> indexDocuments = document.field(CONFIG_INDEXES);
 
       if (indexDocuments != null) {
-        OIndexInternal index;
+        IndexInternal index;
         boolean configUpdated = false;
         Iterator<ODocument> indexConfigurationIterator = indexDocuments.iterator();
         while (indexConfigurationIterator.hasNext()) {
           final ODocument d = indexConfigurationIterator.next();
           try {
             final int indexVersion =
-                d.field(OIndexInternal.INDEX_VERSION) == null
+                d.field(IndexInternal.INDEX_VERSION) == null
                     ? 1
-                    : (Integer) d.field(OIndexInternal.INDEX_VERSION);
+                    : (Integer) d.field(IndexInternal.INDEX_VERSION);
 
             final OIndexMetadata newIndexMetadata =
                 OIndexAbstract.loadMetadataInternal(
                     d,
-                    d.field(OIndexInternal.CONFIG_TYPE),
-                    d.field(OIndexInternal.ALGORITHM),
-                    d.field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
+                    d.field(IndexInternal.CONFIG_TYPE),
+                    d.field(IndexInternal.ALGORITHM),
+                    d.field(IndexInternal.VALUE_CONTAINER_ALGORITHM));
 
             index =
                 OIndexes.createIndex(
@@ -449,7 +449,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
                     newIndexMetadata.getType(),
                     newIndexMetadata.getAlgorithm(),
                     newIndexMetadata.getValueContainerAlgorithm(),
-                    d.field(OIndexInternal.METADATA),
+                    d.field(IndexInternal.METADATA),
                     indexVersion);
 
             final String normalizedName = newIndexMetadata.getName();
@@ -563,7 +563,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       final OTrackedSet<ODocument> indexes = new OTrackedSet<>(document);
 
       for (final OIndex i : this.indexes.values()) {
-        indexes.add(((OIndexInternal) i).updateConfiguration().copy());
+        indexes.add(((IndexInternal) i).updateConfiguration().copy());
       }
       document.field(CONFIG_INDEXES, indexes, OType.EMBEDDEDSET);
 
@@ -645,7 +645,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     }
 
     private void recreateIndex(ODocument indexDocument, ODatabaseDocumentEmbedded db) {
-      final OIndexInternal index = createIndex(indexDocument);
+      final IndexInternal index = createIndex(indexDocument);
       final OIndexMetadata indexMetadata = index.loadMetadata(indexDocument);
       final OIndexDefinition indexDefinition = indexMetadata.getIndexDefinition();
 
@@ -695,7 +695,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
     private void rebuildNonDurableAutomaticIndex(
         ODocument indexDocument,
-        OIndexInternal index,
+        IndexInternal index,
         OIndexMetadata indexMetadata,
         OIndexDefinition indexDefinition) {
       index.loadFromConfiguration(indexDocument);
@@ -747,7 +747,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     }
 
     private void addIndexAsIs(
-        ODocument indexDocument, OIndexInternal index, ODatabaseDocumentEmbedded database) {
+        ODocument indexDocument, IndexInternal index, ODatabaseDocumentEmbedded database) {
       if (index.loadFromConfiguration(indexDocument)) {
         addIndexInternal(index);
         setDirty();
@@ -767,13 +767,13 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       }
     }
 
-    private OIndexInternal createIndex(ODocument idx) {
-      final String indexName = idx.field(OIndexInternal.CONFIG_NAME);
-      final String indexType = idx.field(OIndexInternal.CONFIG_TYPE);
-      String algorithm = idx.field(OIndexInternal.ALGORITHM);
-      String valueContainerAlgorithm = idx.field(OIndexInternal.VALUE_CONTAINER_ALGORITHM);
+    private IndexInternal createIndex(ODocument idx) {
+      final String indexName = idx.field(IndexInternal.CONFIG_NAME);
+      final String indexType = idx.field(IndexInternal.CONFIG_TYPE);
+      String algorithm = idx.field(IndexInternal.ALGORITHM);
+      String valueContainerAlgorithm = idx.field(IndexInternal.VALUE_CONTAINER_ALGORITHM);
 
-      ODocument metadata = idx.field(OIndexInternal.METADATA);
+      ODocument metadata = idx.field(IndexInternal.METADATA);
       if (indexType == null) {
         OLogManager.instance().error(this, "Index type is null, will process other record", null);
         throw new OIndexException(
@@ -787,13 +787,13 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
   }
 
   public OIndex preProcessBeforeReturn(ODatabaseDocumentInternal database, final OIndex index) {
-    final OIndexInternal indexInternal = index.getInternal();
-    if (indexInternal instanceof OIndexMultiValues) {
-      return new OIndexTxAwareMultiValue(database, indexInternal);
+    final IndexInternal indexInternal = index.getInternal();
+    if (indexInternal instanceof IndexMultiValuesOriginalKey) {
+      return new OIndexTxAwareMultiValueOriginal(database, indexInternal);
     } else if (indexInternal instanceof OIndexDictionary) {
       return new OIndexTxAwareDictionary(database, indexInternal);
-    } else if (indexInternal instanceof OIndexOneValue) {
-      return new OIndexTxAwareOneValue(database, indexInternal);
+    } else if (indexInternal instanceof IndexOneValueOriginaltKey) {
+      return new OIndexTxAwareOneValueOriginalKey(database, indexInternal);
     }
 
     return index;

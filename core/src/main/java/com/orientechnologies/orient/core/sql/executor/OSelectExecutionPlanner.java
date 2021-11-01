@@ -12,9 +12,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexAbstract;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -1542,6 +1540,7 @@ public class OSelectExecutionPlanner {
       throw new OCommandExecutionException("Index not found: " + indexName);
     }
 
+    final IndexInternal indexInternal = index.getInternal();
     int[] filterClusterIds = null;
     if (filterClusters != null) {
       filterClusterIds =
@@ -1591,7 +1590,17 @@ public class OSelectExecutionPlanner {
                     + info.whereClause);
           }
         }
-        result.chain(new FetchFromIndexStep(index, keyCondition, null, ctx, profilingEnabled));
+
+        if (indexInternal instanceof IndexInternalOriginalKey) {
+          result.chain(
+              new FetchFromIndexStep(
+                  (IndexInternalOriginalKey) index, keyCondition, null, ctx, profilingEnabled));
+        } else {
+          result.chain(
+              new FetchFromBinaryIndexStep(
+                  (IndexInternalBinaryKey) index, keyCondition, null, ctx, profilingEnabled));
+        }
+
         if (ridCondition != null) {
           OWhereClause where = new OWhereClause(-1);
           where.setBaseExpression(ridCondition);
@@ -1609,7 +1618,16 @@ public class OSelectExecutionPlanner {
           throw new OCommandExecutionException(
               "Index " + indexName + " does not allow iteration on values");
         }
-        result.chain(new FetchFromIndexValuesStep(index, true, ctx, profilingEnabled));
+        if (indexInternal instanceof IndexInternalOriginalKey) {
+          result.chain(
+              new FetchFromIndexValuesStep(
+                  (IndexInternalOriginalKey) indexInternal, true, ctx, profilingEnabled));
+        } else {
+          result.chain(
+              new FetchFromBinaryIndexValuesStep(
+                  (IndexInternalBinaryKey) indexInternal, true, ctx, profilingEnabled));
+        }
+
         result.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
         break;
       case VALUESDESC:
@@ -1617,7 +1635,16 @@ public class OSelectExecutionPlanner {
           throw new OCommandExecutionException(
               "Index " + indexName + " does not allow iteration on values");
         }
-        result.chain(new FetchFromIndexValuesStep(index, false, ctx, profilingEnabled));
+
+        if (indexInternal instanceof IndexInternalOriginalKey) {
+          result.chain(
+              new FetchFromIndexValuesStep(
+                  (IndexInternalOriginalKey) indexInternal, false, ctx, profilingEnabled));
+        } else {
+          result.chain(
+              new FetchFromBinaryIndexValuesStep(
+                  (IndexInternalBinaryKey) indexInternal, false, ctx, profilingEnabled));
+        }
         result.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
         break;
     }
@@ -1955,14 +1982,28 @@ public class OSelectExecutionPlanner {
         IndexSearchDescriptor bestIndex = findBestIndexFor(ctx, clazz.getIndexes(), block, clazz);
         if (bestIndex != null) {
 
-          FetchFromIndexStep step =
-              new FetchFromIndexStep(
-                  bestIndex.idx,
-                  bestIndex.keyCondition,
-                  bestIndex.additionalRangeCondition,
-                  true,
-                  ctx,
-                  profilingEnabled);
+          final IndexInternal indexInternal = bestIndex.idx.getInternal();
+
+          OExecutionStepInternal step;
+          if (indexInternal instanceof IndexInternalOriginalKey) {
+            step =
+                new FetchFromIndexStep(
+                    (IndexInternalOriginalKey) indexInternal,
+                    bestIndex.keyCondition,
+                    bestIndex.additionalRangeCondition,
+                    true,
+                    ctx,
+                    profilingEnabled);
+          } else {
+            step =
+                new FetchFromBinaryIndexStep(
+                    (IndexInternalBinaryKey) indexInternal,
+                    bestIndex.keyCondition,
+                    bestIndex.additionalRangeCondition,
+                    true,
+                    ctx,
+                    profilingEnabled);
+          }
 
           OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
           subPlan.chain(step);
@@ -2194,9 +2235,23 @@ public class OSelectExecutionPlanner {
         }
       }
       if (indexFound && orderType != null) {
-        plan.chain(
-            new FetchFromIndexValuesStep(
-                idx, orderType.equals(OOrderByItem.ASC), ctx, profilingEnabled));
+        final IndexInternal indexInternal = idx.getInternal();
+        if (indexInternal instanceof IndexInternalOriginalKey) {
+          plan.chain(
+              new FetchFromIndexValuesStep(
+                  (IndexInternalOriginalKey) indexInternal,
+                  orderType.equals(OOrderByItem.ASC),
+                  ctx,
+                  profilingEnabled));
+        } else {
+          plan.chain(
+              new FetchFromBinaryIndexValuesStep(
+                  (IndexInternalBinaryKey) indexInternal,
+                  orderType.equals(OOrderByItem.ASC),
+                  ctx,
+                  profilingEnabled));
+        }
+
         int[] filterClusterIds = null;
         if (filterClusters != null) {
           filterClusterIds =
@@ -2385,14 +2440,28 @@ public class OSelectExecutionPlanner {
       IndexSearchDescriptor desc = indexSearchDescriptors.get(0);
       result = new ArrayList<>();
       Boolean orderAsc = getOrderDirection(info);
-      result.add(
-          new FetchFromIndexStep(
-              desc.idx,
-              desc.keyCondition,
-              desc.additionalRangeCondition,
-              !Boolean.FALSE.equals(orderAsc),
-              ctx,
-              profilingEnabled));
+
+      final IndexInternal indexInternal = desc.idx.getInternal();
+
+      if (indexInternal instanceof IndexInternalOriginalKey) {
+        result.add(
+            new FetchFromIndexStep(
+                (IndexInternalOriginalKey) indexInternal,
+                desc.keyCondition,
+                desc.additionalRangeCondition,
+                !Boolean.FALSE.equals(orderAsc),
+                ctx,
+                profilingEnabled));
+      } else {
+        result.add(
+            new FetchFromBinaryIndexStep(
+                (IndexInternalBinaryKey) indexInternal,
+                desc.keyCondition,
+                desc.additionalRangeCondition,
+                !Boolean.FALSE.equals(orderAsc),
+                ctx,
+                profilingEnabled));
+      }
       int[] filterClusterIds = null;
       if (filterClusters != null) {
         filterClusterIds =
@@ -2545,9 +2614,24 @@ public class OSelectExecutionPlanner {
     List<OInternalExecutionPlan> subPlans = new ArrayList<>();
     for (IndexSearchDescriptor desc : indexSearchDescriptors) {
       OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
-      subPlan.chain(
-          new FetchFromIndexStep(
-              desc.idx, desc.keyCondition, desc.additionalRangeCondition, ctx, profilingEnabled));
+      final IndexInternal indexInternal = desc.idx.getInternal();
+      if (indexInternal instanceof IndexInternalOriginalKey) {
+        subPlan.chain(
+            new FetchFromIndexStep(
+                (IndexInternalOriginalKey) indexInternal,
+                desc.keyCondition,
+                desc.additionalRangeCondition,
+                ctx,
+                profilingEnabled));
+      } else {
+        subPlan.chain(
+            new FetchFromBinaryIndexStep(
+                (IndexInternalBinaryKey) indexInternal,
+                desc.keyCondition,
+                desc.additionalRangeCondition,
+                ctx,
+                profilingEnabled));
+      }
       int[] filterClusterIds = null;
       if (filterClusters != null) {
         filterClusterIds =

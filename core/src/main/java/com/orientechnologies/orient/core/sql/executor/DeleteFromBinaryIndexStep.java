@@ -5,7 +5,7 @@ import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.IndexInternalOriginalKey;
+import com.orientechnologies.orient.core.index.IndexInternalBinaryKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.sql.parser.OAndBlock;
 import com.orientechnologies.orient.core.sql.parser.OBetweenCondition;
@@ -29,28 +29,27 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
-/** Created by luigidellaquila on 11/08/16. */
-public class DeleteFromIndexStep extends AbstractExecutionStep {
-  protected final IndexInternalOriginalKey index;
+public class DeleteFromBinaryIndexStep extends AbstractExecutionStep {
+  protected final IndexInternalBinaryKey index;
   private final OBinaryCondition additional;
   private final OBooleanExpression ridCondition;
   private final boolean orderAsc;
 
-  private ORawPair<Object, ORID> nextEntry = null;
+  private ORawPair<byte[], ORID> nextEntry = null;
 
   private final OBooleanExpression condition;
 
   private boolean inited = false;
-  private Stream<ORawPair<Object, ORID>> stream;
-  private Iterator<ORawPair<Object, ORID>> streamIterator;
+  private Stream<ORawPair<byte[], ORID>> stream;
+  private Iterator<ORawPair<byte[], ORID>> streamIterator;
 
   private long cost = 0;
 
-  private final Set<Stream<ORawPair<Object, ORID>>> acquiredStreams =
+  private final Set<Stream<ORawPair<byte[], ORID>>> acquiredStreams =
       Collections.newSetFromMap(new IdentityHashMap<>());
 
-  public DeleteFromIndexStep(
-      IndexInternalOriginalKey index,
+  public DeleteFromBinaryIndexStep(
+      IndexInternalBinaryKey index,
       OBooleanExpression condition,
       OBinaryCondition additionalRangeCondition,
       OBooleanExpression ridCondition,
@@ -59,8 +58,8 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     this(index, condition, additionalRangeCondition, ridCondition, true, ctx, profilingEnabled);
   }
 
-  private DeleteFromIndexStep(
-      IndexInternalOriginalKey index,
+  private DeleteFromBinaryIndexStep(
+      IndexInternalBinaryKey index,
       OBooleanExpression condition,
       OBinaryCondition additionalRangeCondition,
       OBooleanExpression ridCondition,
@@ -95,7 +94,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
           if (!hasNext()) {
             throw new IllegalStateException();
           }
-          ORawPair<Object, ORID> entry = nextEntry;
+          ORawPair<byte[], ORID> entry = nextEntry;
           OResultInternal result = new OResultInternal();
           ORID value = entry.second;
 
@@ -128,7 +127,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
   }
 
   private void closeStreams() {
-    for (Stream<ORawPair<Object, ORID>> stream : acquiredStreams) {
+    for (Stream<ORawPair<byte[], ORID>> stream : acquiredStreams) {
       stream.close();
     }
     acquiredStreams.clear();
@@ -157,9 +156,9 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     }
   }
 
-  private ORawPair<Object, ORID> loadNextEntry(OCommandContext commandContext) {
+  private ORawPair<byte[], ORID> loadNextEntry(OCommandContext commandContext) {
     while (streamIterator.hasNext()) {
-      final ORawPair<Object, ORID> entry = streamIterator.next();
+      final ORawPair<byte[], ORID> entry = streamIterator.next();
       if (ridCondition == null) {
         return entry;
       }
@@ -209,7 +208,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     streamIterator = stream.iterator();
   }
 
-  private void storeAcquiredStream(Stream<ORawPair<Object, ORID>> stream) {
+  private void storeAcquiredStream(Stream<ORawPair<byte[], ORID>> stream) {
     if (stream != null) {
       acquiredStreams.add(stream);
     }
@@ -320,7 +319,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     return rightValue;
   }
 
-  private Stream<ORawPair<Object, ORID>> createStream(
+  private Stream<ORawPair<byte[], ORID>> createStream(
       OBinaryCompareOperator operator,
       OIndexDefinition definition,
       Object value,
