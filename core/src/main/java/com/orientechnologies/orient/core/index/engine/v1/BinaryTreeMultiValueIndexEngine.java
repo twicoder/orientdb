@@ -7,31 +7,33 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.engine.BaseBinaryKeyIndexEngine;
-import com.orientechnologies.orient.core.index.engine.SingleValueBinaryKeyIndexEngine;
+import com.orientechnologies.orient.core.index.engine.MultiValueBinaryKeyIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.index.nkbtree.binarybtree.BinaryBTree;
 import com.orientechnologies.orient.core.storage.index.nkbtree.normalizers.KeyNormalizers;
+
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public class CellBTreeSingleValueBinaryKeyIndexEngine
-    implements CellBTreeIndexEngine, SingleValueBinaryKeyIndexEngine {
-  private static final String DATA_FILE_EXTENSION = ".bbt";
+public class BinaryTreeMultiValueIndexEngine implements MultiValueBinaryKeyIndexEngine {
+  public static final String DATA_FILE_EXTENSION = ".bbt";
 
   private final String name;
   private final int id;
 
   private final BinaryBTree bTree;
-  private final KeyNormalizers keyNormalizers;
 
   private volatile OType[] keyTypes;
 
-  public CellBTreeSingleValueBinaryKeyIndexEngine(
+  private final KeyNormalizers keyNormalizers;
+
+  public BinaryTreeMultiValueIndexEngine(
       final String name,
       final int id,
       final OAbstractPaginatedStorage storage,
@@ -46,6 +48,7 @@ public class CellBTreeSingleValueBinaryKeyIndexEngine
     this.bTree =
         new BinaryBTree(
             spliteratorCacheSize, maxKeySize, maxSearchDepth, storage, name, DATA_FILE_EXTENSION);
+
     this.keyNormalizers = new KeyNormalizers(locale, decomposition);
   }
 
@@ -81,8 +84,16 @@ public class CellBTreeSingleValueBinaryKeyIndexEngine
       throw new IllegalStateException(
           "Amount of key types does not match to key size " + keyTypes.length + " vs " + keySize);
     }
+
     bTree.create(atomicOperation);
-    this.keyTypes = keyTypes;
+
+    this.keyTypes = extendKeyTypes(keyTypes);
+  }
+
+  private OType[] extendKeyTypes(OType[] keyTypes) {
+    final OType[] types = Arrays.copyOf(keyTypes, keyTypes.length + 1);
+    types[types.length - 1] = OType.LINK;
+    return types;
   }
 
   @Override
@@ -91,15 +102,15 @@ public class CellBTreeSingleValueBinaryKeyIndexEngine
     bTree.delete(atomicOperation);
   }
 
+  @Override
+  public void clear(OAtomicOperation atomicOperation) throws IOException {
+    doClearTree(atomicOperation);
+  }
+
   private void doClearTree(OAtomicOperation atomicOperation) {
     try (Stream<ORawPair<byte[], ORID>> stream = bTree.allEntries()) {
       stream.forEach(pair -> bTree.remove(atomicOperation, pair.first));
     }
-  }
-
-  @Override
-  public void clear(OAtomicOperation atomicOperation) throws IOException {
-    doClearTree(atomicOperation);
   }
 
   @Override
@@ -132,25 +143,40 @@ public class CellBTreeSingleValueBinaryKeyIndexEngine
   }
 
   @Override
-  public boolean rawRemove(OAtomicOperation atomicOperation, byte[] key) throws IOException {
-    return bTree.remove(atomicOperation, key) != null;
+  public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value) {
+    final OCompositeKey compositeKey = createCompositeKey(key, value);
+    final byte[] normalizedKey = keyNormalizers.normalize(compositeKey, keyTypes);
+
+    return bTree.remove(atomicOperation, normalizedKey) != null;
   }
 
   @Override
   public void put(OAtomicOperation atomicOperation, Object key, ORID value) {
-    final byte[] normalizedKey = normalizeKey(key);
+    final OCompositeKey compositeKey = createCompositeKey(key, value);
+    final byte[] normalizedKey = keyNormalizers.normalize(compositeKey, keyTypes);
+
     bTree.put(atomicOperation, normalizedKey, value);
   }
 
   @Override
   public Stream<ORID> get(Object key) {
-    final byte[] normalizedKey = normalizeKey(key);
-    final ORID rid = bTree.get(normalizedKey);
-    if (rid == null) {
-      return Stream.empty();
-    }
+    final OCompositeKey compositeKey = convertToCompositeKey(key);
 
-    return Stream.of(rid);
+    final OCompositeKey enhancedKeyFrom =
+        (OCompositeKey)
+            BaseBinaryKeyIndexEngine.enhanceFromCompositeKeyBetweenAsc(
+                compositeKey, true, keyTypes.length);
+    final OCompositeKey enhancedKeyTo =
+        (OCompositeKey)
+            BaseBinaryKeyIndexEngine.enhanceToCompositeKeyBetweenAsc(
+                compositeKey, true, keyTypes.length);
+
+    final byte[] normalizedKeyFrom = keyNormalizers.normalize(enhancedKeyFrom, keyTypes);
+    final byte[] normalizedKeyTo = keyNormalizers.normalize(enhancedKeyTo, keyTypes);
+
+    return bTree
+        .iterateEntriesBetween(normalizedKeyFrom, true, normalizedKeyTo, true, true)
+        .map(pair -> pair.second);
   }
 
   @Override
@@ -166,41 +192,7 @@ public class CellBTreeSingleValueBinaryKeyIndexEngine
     }
 
     bTree.load(name);
-    this.keyTypes = keyTypes;
-  }
-
-  @Override
-  public boolean validatedPut(
-      OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
-    final byte[] normalizedKey = normalizeKey(key);
-    return bTree.validatedPut(atomicOperation, key, normalizedKey, value, validator);
-  }
-
-  @Override
-  public boolean remove(OAtomicOperation atomicOperation, Object key) throws IOException {
-    final byte[] normalizedKey = normalizeKey(key);
-    return bTree.remove(atomicOperation, normalizedKey) != null;
-  }
-
-  private byte[] normalizeKey(Object key) {
-    final byte[] normalizedKey;
-
-    if (key instanceof OCompositeKey) {
-      final OCompositeKey compositeKey = (OCompositeKey) key;
-      assert compositeKey.getKeys().size() == keyTypes.length;
-
-      normalizedKey = keyNormalizers.normalize(compositeKey, keyTypes);
-    } else {
-      assert keyTypes.length == 1;
-
-      normalizedKey = keyNormalizers.normalize(key, keyTypes[0]);
-    }
-    return normalizedKey;
-  }
-
-  @Override
-  public boolean isMultiValue() {
-    return false;
+    this.keyTypes = extendKeyTypes(keyTypes);
   }
 
   @Override
@@ -211,28 +203,34 @@ public class CellBTreeSingleValueBinaryKeyIndexEngine
       boolean toInclusive,
       boolean ascSortOrder,
       ValuesTransformer transformer) {
+    final OCompositeKey compositeKeyFrom = convertToCompositeKey(rangeFrom);
+    final OCompositeKey compositeKeyTo = convertToCompositeKey(rangeTo);
 
-    final Object enhancedKeyFrom;
-    final Object enhancedKeyTo;
+    final OCompositeKey enhancedKeyFrom;
+    final OCompositeKey enhancedKeyTo;
 
     if (ascSortOrder) {
       enhancedKeyFrom =
-          BaseBinaryKeyIndexEngine.enhanceFromCompositeKeyBetweenAsc(
-              rangeFrom, fromInclusive, keyTypes.length);
+          (OCompositeKey)
+              BaseBinaryKeyIndexEngine.enhanceFromCompositeKeyBetweenAsc(
+                  compositeKeyFrom, fromInclusive, keyTypes.length);
       enhancedKeyTo =
-          BaseBinaryKeyIndexEngine.enhanceToCompositeKeyBetweenAsc(
-              rangeTo, toInclusive, keyTypes.length);
+          (OCompositeKey)
+              BaseBinaryKeyIndexEngine.enhanceToCompositeKeyBetweenAsc(
+                  compositeKeyTo, toInclusive, keyTypes.length);
     } else {
       enhancedKeyFrom =
-          BaseBinaryKeyIndexEngine.enhanceToCompositeKeyBetweenDesc(
-              rangeFrom, fromInclusive, keyTypes.length);
+          (OCompositeKey)
+              BaseBinaryKeyIndexEngine.enhanceFromCompositeKeyBetweenDesc(
+                  compositeKeyFrom, fromInclusive, keyTypes.length);
       enhancedKeyTo =
-          BaseBinaryKeyIndexEngine.enhanceFromCompositeKeyBetweenDesc(
-              rangeTo, toInclusive, keyTypes.length);
+          (OCompositeKey)
+              BaseBinaryKeyIndexEngine.enhanceToCompositeKeyBetweenDesc(
+                  compositeKeyTo, toInclusive, keyTypes.length);
     }
 
-    final byte[] normalizedKeyFrom = normalizeKey(enhancedKeyFrom);
-    final byte[] normalizedKeyTo = normalizeKey(enhancedKeyTo);
+    final byte[] normalizedKeyFrom = keyNormalizers.normalize(enhancedKeyFrom, keyTypes);
+    final byte[] normalizedKeyTo = keyNormalizers.normalize(enhancedKeyTo, keyTypes);
 
     return bTree.iterateEntriesBetween(
         normalizedKeyFrom, fromInclusive, normalizedKeyTo, toInclusive, ascSortOrder);
@@ -241,19 +239,22 @@ public class CellBTreeSingleValueBinaryKeyIndexEngine
   @Override
   public Stream<ORawPair<byte[], ORID>> iterateEntriesMajor(
       Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-    final Object enhancedKey;
+    final OCompositeKey compositeKey = convertToCompositeKey(fromKey);
 
+    final OCompositeKey enhancedKey;
     if (ascSortOrder) {
       enhancedKey =
-          BaseBinaryKeyIndexEngine.enhanceCompositeKeyMajorAsc(
-              fromKey, isInclusive, keyTypes.length);
+          (OCompositeKey)
+              BaseBinaryKeyIndexEngine.enhanceCompositeKeyMajorAsc(
+                  compositeKey, isInclusive, keyTypes.length);
     } else {
       enhancedKey =
-          BaseBinaryKeyIndexEngine.enhanceCompositeKeyMajorDesc(
-              fromKey, isInclusive, keyTypes.length);
+          (OCompositeKey)
+              BaseBinaryKeyIndexEngine.enhanceCompositeKeyMajorDesc(
+                  compositeKey, isInclusive, keyTypes.length);
     }
 
-    final byte[] normalizedKey = normalizeKey(enhancedKey);
+    final byte[] normalizedKey = keyNormalizers.normalize(enhancedKey, keyTypes);
 
     return bTree.iterateEntriesMajor(normalizedKey, isInclusive, ascSortOrder);
   }
@@ -261,34 +262,35 @@ public class CellBTreeSingleValueBinaryKeyIndexEngine
   @Override
   public Stream<ORawPair<byte[], ORID>> iterateEntriesMinor(
       Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-    final Object enhancedKey;
+    final OCompositeKey compositeKey = convertToCompositeKey(toKey);
+
+    final OCompositeKey enhancedKey;
     if (ascSortOrder) {
       enhancedKey =
-          BaseBinaryKeyIndexEngine.enhanceCompositeKeyMinorAsc(toKey, isInclusive, keyTypes.length);
+          (OCompositeKey)
+              BaseBinaryKeyIndexEngine.enhanceCompositeKeyMinorAsc(
+                  compositeKey, isInclusive, keyTypes.length);
     } else {
       enhancedKey =
-          BaseBinaryKeyIndexEngine.enhanceCompositeKeyMinorDesc(
-              toKey, isInclusive, keyTypes.length);
+          (OCompositeKey)
+              BaseBinaryKeyIndexEngine.enhanceCompositeKeyMinorDesc(
+                  compositeKey, isInclusive, keyTypes.length);
     }
 
-    final byte[] normalizedKey = normalizeKey(enhancedKey);
+    final byte[] normalizeKey = keyNormalizers.normalize(enhancedKey, keyTypes);
 
-    return bTree.iterateEntriesMinor(normalizedKey, isInclusive, ascSortOrder);
+    return bTree.iterateEntriesMinor(normalizeKey, isInclusive, ascSortOrder);
   }
 
   @Override
   public Stream<ORawPair<byte[], ORID>> stream(ValuesTransformer valuesTransformer) {
-    final byte[] firstKey = bTree.firstKey();
-    if (firstKey == null) {
-      return Stream.empty();
-    }
-
-    return bTree.iterateEntriesMajor(firstKey, true, true);
+    return bTree.allEntries();
   }
 
   @Override
   public Stream<ORawPair<byte[], ORID>> descStream(ValuesTransformer valuesTransformer) {
     final byte[] lastKey = bTree.lastKey();
+
     if (lastKey == null) {
       return Stream.empty();
     }
@@ -299,5 +301,27 @@ public class CellBTreeSingleValueBinaryKeyIndexEngine
   @Override
   public Stream<byte[]> keyStream() {
     return stream(null).map(pair -> pair.first);
+  }
+
+  private static OCompositeKey createCompositeKey(final Object key, final ORID value) {
+    final OCompositeKey compositeKey = new OCompositeKey(key);
+    compositeKey.addKey(value);
+    return compositeKey;
+  }
+
+  private static OCompositeKey convertToCompositeKey(Object rangeFrom) {
+    OCompositeKey firstKey;
+    if (rangeFrom instanceof OCompositeKey) {
+      firstKey = (OCompositeKey) rangeFrom;
+    } else {
+      firstKey = new OCompositeKey(rangeFrom);
+    }
+    return firstKey;
+  }
+
+  @Override
+  public boolean rawRemove(OAtomicOperation atomicOperation, byte[] key, ORID value)
+      throws IOException {
+    return bTree.remove(atomicOperation, key) != null;
   }
 }

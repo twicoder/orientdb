@@ -4,6 +4,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import java.io.IOException;
 
-public interface MultiValueBinaryKeyIndexEngine extends BaseBinaryKeyIndexEngine {
+public interface MultiValueBinaryKeyIndexEngine extends BaseBinaryKeyIndexEngine, MultiValueIndexEngine {
   boolean rawRemove(OAtomicOperation atomicOperation, byte[] key, ORID value) throws IOException;
 }
