@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
+import com.orientechnologies.orient.core.index.engine.BaseIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import java.util.Map;
@@ -53,7 +53,7 @@ public interface OIndexFactory {
       int version)
       throws OConfigurationException;
 
-  OBaseIndexEngine createIndexEngine(
+  BaseIndexEngine createIndexEngine(
       int indexId,
       String algorithm,
       String name,

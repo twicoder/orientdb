@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
+import com.orientechnologies.orient.core.index.engine.BaseOriginalKeyIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -36,7 +37,7 @@ import java.util.stream.Stream;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 18.07.13
  */
-public class ORemoteIndexEngine implements OIndexEngine {
+public class ORemoteIndexEngine implements OIndexEngine, BaseOriginalKeyIndexEngine {
   private final String name;
   private final int id;
 

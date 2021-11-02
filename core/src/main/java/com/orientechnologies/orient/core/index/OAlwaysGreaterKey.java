@@ -26,6 +26,8 @@ package com.orientechnologies.orient.core.index;
  * @since 20.03.12
  */
 public final class OAlwaysGreaterKey implements Comparable<Comparable<?>> {
+  public static final OAlwaysGreaterKey INSTANCE = new OAlwaysGreaterKey();
+
   public int compareTo(Comparable<?> o) {
     return 1;
   }

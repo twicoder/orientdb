@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.index.engine;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -11,9 +10,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
-import java.util.stream.Stream;
 
-public interface OBaseIndexEngine {
+public interface BaseIndexEngine {
   int getId();
 
   void init(
@@ -42,29 +40,6 @@ public interface OBaseIndexEngine {
   void clear(OAtomicOperation atomicOperation) throws IOException;
 
   void close();
-
-  Stream<ORawPair<Object, ORID>> iterateEntriesBetween(
-      Object rangeFrom,
-      boolean fromInclusive,
-      Object rangeTo,
-      boolean toInclusive,
-      boolean ascSortOrder,
-      ValuesTransformer transformer);
-
-  Stream<ORawPair<Object, ORID>> iterateEntriesMajor(
-      Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer);
-
-  Stream<ORawPair<Object, ORID>> iterateEntriesMinor(
-      final Object toKey,
-      final boolean isInclusive,
-      boolean ascSortOrder,
-      ValuesTransformer transformer);
-
-  Stream<ORawPair<Object, ORID>> stream(ValuesTransformer valuesTransformer);
-
-  Stream<ORawPair<Object, ORID>> descStream(ValuesTransformer valuesTransformer);
-
-  Stream<Object> keyStream();
 
   long size(ValuesTransformer transformer);
 

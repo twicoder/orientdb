@@ -26,6 +26,8 @@ package com.orientechnologies.orient.core.index;
  * @since 20.03.12
  */
 public final class OAlwaysLessKey implements Comparable<Comparable<?>> {
+  public static final OAlwaysLessKey INSTANCE = new OAlwaysLessKey();
+
   public int compareTo(Comparable<?> o) {
     return -1;
   }

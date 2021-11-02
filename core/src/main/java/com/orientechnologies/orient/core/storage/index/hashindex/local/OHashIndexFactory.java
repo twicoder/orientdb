@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexNotUnique;
 import com.orientechnologies.orient.core.index.OIndexUnique;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
+import com.orientechnologies.orient.core.index.engine.BaseIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -139,7 +139,7 @@ public final class OHashIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public final OBaseIndexEngine createIndexEngine(
+  public final BaseIndexEngine createIndexEngine(
       final int indexId,
       final String algorithm,
       final String name,

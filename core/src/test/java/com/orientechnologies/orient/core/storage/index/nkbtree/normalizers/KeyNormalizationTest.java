@@ -26,7 +26,7 @@ public class KeyNormalizationTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void normalizeNullInput() {
-    keyNormalizer.normalize(null, null);
+    keyNormalizer.normalize(null, (OType[]) null);
   }
 
   @Test(expected = IllegalArgumentException.class)

@@ -11,7 +11,7 @@ import com.orientechnologies.orient.core.exception.NotEmptyComponentCanNotBeRemo
 import com.orientechnologies.orient.core.exception.OLocalHashTableV2Exception;
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
 import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
+import com.orientechnologies.orient.core.index.engine.BaseIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -288,7 +288,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
       final OAtomicOperation atomicOperation,
       final K key,
       final V value,
-      final OBaseIndexEngine.Validator<K, V> validator) {
+      final BaseIndexEngine.Validator<K, V> validator) {
     return put(atomicOperation, key, value, validator);
   }
 
@@ -1347,7 +1347,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
       final OAtomicOperation atomicOperation,
       K k,
       final V value,
-      final OBaseIndexEngine.Validator<K, V> validator) {
+      final BaseIndexEngine.Validator<K, V> validator) {
     return calculateInsideComponentOperation(
         atomicOperation,
         operation -> {
@@ -1421,7 +1421,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
         if (validator != null) {
           final Object result = validator.validate(null, oldValue, value);
-          if (result == OBaseIndexEngine.Validator.IGNORE) {
+          if (result == BaseIndexEngine.Validator.IGNORE) {
             return false;
           }
 
@@ -1475,7 +1475,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
         if (validator != null) {
           final Object result = validator.validate(key, oldValue, value);
-          if (result == OBaseIndexEngine.Validator.IGNORE) {
+          if (result == BaseIndexEngine.Validator.IGNORE) {
             return false;
           }
 

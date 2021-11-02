@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OAlwaysGreaterKey;
 import com.orientechnologies.orient.core.index.OAlwaysLessKey;
 import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
+import com.orientechnologies.orient.core.index.engine.BaseIndexEngine;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -508,7 +508,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
                       (byte) 1,
                       (k, ov, v) -> {
                         if (ov != null) {
-                          return OBaseIndexEngine.Validator.IGNORE;
+                          return BaseIndexEngine.Validator.IGNORE;
                         }
 
                         nullBucket.incrementSize();
@@ -549,7 +549,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
           (byte) 1,
           (k, ov, v) -> {
             if (ov != null) {
-              return OBaseIndexEngine.Validator.IGNORE;
+              return BaseIndexEngine.Validator.IGNORE;
             }
 
             bucketMultiValue.incrementEntriesCount(index);

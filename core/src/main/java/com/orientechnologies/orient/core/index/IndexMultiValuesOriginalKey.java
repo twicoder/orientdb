@@ -27,7 +27,7 @@ import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
+import com.orientechnologies.orient.core.index.engine.BaseIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OMixedIndexRIDContainerSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
@@ -501,7 +501,7 @@ public abstract class IndexMultiValuesOriginalKey extends OIndexAbstract
     }
   }
 
-  private static final class MultiValuesTransformer implements OBaseIndexEngine.ValuesTransformer {
+  private static final class MultiValuesTransformer implements BaseIndexEngine.ValuesTransformer {
     private static final MultiValuesTransformer INSTANCE = new MultiValuesTransformer();
 
     @Override

@@ -38,7 +38,7 @@ import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdExceptio
 import com.orientechnologies.orient.core.exception.OManualIndexesAreProhibited;
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
+import com.orientechnologies.orient.core.index.engine.BaseIndexEngine;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -1045,7 +1045,7 @@ public abstract class OIndexAbstract implements IndexInternal {
 
   @Override
   public String getIndexNameByKey(final Object key) {
-    OBaseIndexEngine engine;
+    BaseIndexEngine engine;
 
     while (true) {
       try {

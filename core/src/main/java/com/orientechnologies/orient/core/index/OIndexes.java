@@ -19,7 +19,7 @@ import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProvide
 
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
+import com.orientechnologies.orient.core.index.engine.BaseIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -185,7 +185,7 @@ public final class OIndexes {
             + OCollections.toString(getIndexTypes()));
   }
 
-  public static OBaseIndexEngine createIndexEngine(
+  public static BaseIndexEngine createIndexEngine(
       int indexId,
       final String name,
       final String algorithm,

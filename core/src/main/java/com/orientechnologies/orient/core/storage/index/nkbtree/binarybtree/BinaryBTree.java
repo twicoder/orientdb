@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.exception.NotEmptyComponentCanNotBeRemo
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
+import com.orientechnologies.orient.core.index.engine.BaseIndexEngine;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -372,29 +372,35 @@ public final class BinaryBTree extends ODurableComponent {
     }
   }
 
+  public void acquireAtomicExclusiveLock() {
+    atomicOperationsManager.acquireExclusiveLockTillOperationComplete(this);
+  }
+
   public boolean validatedPut(
       OAtomicOperation atomicOperation,
+      Object originalKey,
       final byte[] key,
       final ORID value,
-      final OBaseIndexEngine.Validator<byte[], ORID> validator) {
-    return update(atomicOperation, key, value, validator);
+      final BaseIndexEngine.Validator<Object, ORID> validator) {
+    return update(atomicOperation, originalKey, key, value, validator);
   }
 
   public void put(final OAtomicOperation atomicOperation, final byte[] key, final ORID value) {
-    update(atomicOperation, key, value, null);
+    update(atomicOperation, null, key, value, null);
   }
 
   private boolean update(
       final OAtomicOperation atomicOperation,
+      Object originalKey,
       final byte[] key,
       final ORID rid,
-      final OBaseIndexEngine.Validator<byte[], ORID> validator) {
+      final BaseIndexEngine.Validator<Object, ORID> validator) {
     return calculateInsideComponentOperation(
         atomicOperation,
         operation -> {
           acquireExclusiveLock();
           try {
-            return doUpdate(atomicOperation, key, rid, validator);
+            return doUpdate(atomicOperation, originalKey, key, rid, validator);
           } finally {
             releaseExclusiveLock();
           }
@@ -403,9 +409,10 @@ public final class BinaryBTree extends ODurableComponent {
 
   private Boolean doUpdate(
       OAtomicOperation atomicOperation,
+      Object originalKey,
       byte[] key,
       ORID rid,
-      OBaseIndexEngine.Validator<byte[], ORID> validator)
+      BaseIndexEngine.Validator<Object, ORID> validator)
       throws IOException {
     ORID value = rid;
 
@@ -445,8 +452,8 @@ public final class BinaryBTree extends ODurableComponent {
 
       try {
 
-        final Object result = validator.validate(key, oldValue, value);
-        if (result == OBaseIndexEngine.Validator.IGNORE) {
+        final Object result = validator.validate(originalKey, oldValue, value);
+        if (result == BaseIndexEngine.Validator.IGNORE) {
           ignored = true;
           failure = false;
           return false;
@@ -1245,7 +1252,7 @@ public final class BinaryBTree extends ODurableComponent {
               }
 
               for (final ORawPair<byte[], ORID> entry : leftOvers) {
-                doUpdate(atomicOperation, entry.first, entry.second, null);
+                doUpdate(atomicOperation, null, entry.first, entry.second, null);
               }
 
             } else {

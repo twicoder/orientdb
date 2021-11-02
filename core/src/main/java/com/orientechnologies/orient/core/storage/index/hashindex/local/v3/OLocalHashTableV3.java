@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.exception.NotEmptyComponentCanNotBeRemo
 import com.orientechnologies.orient.core.exception.OLocalHashTableV3Exception;
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
 import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
+import com.orientechnologies.orient.core.index.engine.BaseIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -277,7 +277,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
       OAtomicOperation atomicOperation,
       final K key,
       final V value,
-      final OBaseIndexEngine.Validator<K, V> validator) {
+      final BaseIndexEngine.Validator<K, V> validator) {
     return put(atomicOperation, key, value, validator);
   }
 
@@ -1297,7 +1297,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
       OAtomicOperation atomicOperation,
       K k,
       final V value,
-      final OBaseIndexEngine.Validator<K, V> validator) {
+      final BaseIndexEngine.Validator<K, V> validator) {
     return calculateInsideComponentOperation(
         atomicOperation,
         operation -> {
@@ -1355,7 +1355,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
         if (validator != null) {
           final Object result = validator.validate(null, oldValue, value);
-          if (result == OBaseIndexEngine.Validator.IGNORE) {
+          if (result == BaseIndexEngine.Validator.IGNORE) {
             return false;
           }
 
@@ -1401,7 +1401,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
         final V oldValue = index > -1 ? bucket.getValue(index) : null;
         if (validator != null) {
           final Object result = validator.validate(key, oldValue, value);
-          if (result == OBaseIndexEngine.Validator.IGNORE) {
+          if (result == BaseIndexEngine.Validator.IGNORE) {
             return false;
           }
 

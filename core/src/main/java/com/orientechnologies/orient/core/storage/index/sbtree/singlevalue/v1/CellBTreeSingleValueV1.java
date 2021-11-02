@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OAlwaysGreaterKey;
 import com.orientechnologies.orient.core.index.OAlwaysLessKey;
 import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
+import com.orientechnologies.orient.core.index.engine.BaseIndexEngine;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -247,7 +247,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
       OAtomicOperation atomicOperation,
       final K key,
       final ORID value,
-      final OBaseIndexEngine.Validator<K, ORID> validator) {
+      final BaseIndexEngine.Validator<K, ORID> validator) {
     return update(atomicOperation, key, value, validator);
   }
 
@@ -255,7 +255,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
       final OAtomicOperation atomicOperation,
       K k,
       ORID rid,
-      final OBaseIndexEngine.Validator<K, ORID> validator) {
+      final BaseIndexEngine.Validator<K, ORID> validator) {
     return calculateInsideComponentOperation(
         atomicOperation,
         operation -> {
@@ -311,7 +311,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
                 try {
 
                   final Object result = validator.validate(key, oldValue, value);
-                  if (result == OBaseIndexEngine.Validator.IGNORE) {
+                  if (result == BaseIndexEngine.Validator.IGNORE) {
                     ignored = true;
                     failure = false;
                     return false;
@@ -398,7 +398,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
 
                 if (validator != null) {
                   final Object result = validator.validate(null, oldValue, value);
-                  if (result == OBaseIndexEngine.Validator.IGNORE) {
+                  if (result == BaseIndexEngine.Validator.IGNORE) {
                     return false;
                   }
                 }

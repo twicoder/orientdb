@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import java.util.stream.Stream;
 
-public interface OV1IndexEngine extends OBaseIndexEngine {
+public interface V1IndexEngine extends BaseIndexEngine {
   int API_VERSION = 1;
 
   void put(OAtomicOperation atomicOperation, Object key, ORID value);

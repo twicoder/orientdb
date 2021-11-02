@@ -33,7 +33,7 @@ import java.util.Map;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 6/29/13
  */
-public interface OIndexEngine extends OBaseIndexEngine {
+public interface OIndexEngine extends BaseIndexEngine {
   int VERSION = 0;
 
   Object get(Object key);

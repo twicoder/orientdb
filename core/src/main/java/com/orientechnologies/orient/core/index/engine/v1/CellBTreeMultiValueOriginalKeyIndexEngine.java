@@ -11,7 +11,8 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.engine.OMultiValueIndexEngine;
+import com.orientechnologies.orient.core.index.engine.BaseOriginalKeyIndexEngine;
+import com.orientechnologies.orient.core.index.engine.MultiValueIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OCompactedLinkSerializer;
@@ -29,8 +30,8 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public final class OCellBTreeMultiValueIndexEngine
-    implements OMultiValueIndexEngine, OCellBTreeIndexEngine {
+public final class CellBTreeMultiValueOriginalKeyIndexEngine
+    implements MultiValueIndexEngine, CellBTreeIndexEngine, BaseOriginalKeyIndexEngine {
 
   public static final String DATA_FILE_EXTENSION = ".cbt";
   private static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
@@ -45,7 +46,7 @@ public final class OCellBTreeMultiValueIndexEngine
   private final int id;
   private final String nullTreeName;
 
-  public OCellBTreeMultiValueIndexEngine(
+  public CellBTreeMultiValueOriginalKeyIndexEngine(
       int id, String name, OAbstractPaginatedStorage storage, final int version) {
     this.id = id;
     this.name = name;
@@ -398,7 +399,7 @@ public final class OCellBTreeMultiValueIndexEngine
 
     assert svTree != null;
     //noinspection resource
-    return svTree.keyStream().map(OCellBTreeMultiValueIndexEngine::extractKey);
+    return svTree.keyStream().map(CellBTreeMultiValueOriginalKeyIndexEngine::extractKey);
   }
 
   @Override

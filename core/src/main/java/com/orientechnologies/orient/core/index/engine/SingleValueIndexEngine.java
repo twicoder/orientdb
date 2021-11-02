@@ -4,7 +4,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import java.io.IOException;
 
-public interface OSingleValueIndexEngine extends OV1IndexEngine {
+public interface SingleValueIndexEngine extends V1IndexEngine {
   boolean validatedPut(
       OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator);
 

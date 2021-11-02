@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
+import com.orientechnologies.orient.core.index.engine.BaseOriginalKeyIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -46,7 +47,7 @@ import java.util.stream.StreamSupport;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/30/13
  */
-public class OSBTreeIndexEngine implements OIndexEngine {
+public class OSBTreeIndexEngine implements OIndexEngine, BaseOriginalKeyIndexEngine {
   public static final int VERSION = 2;
 
   public static final String DATA_FILE_EXTENSION = ".sbt";

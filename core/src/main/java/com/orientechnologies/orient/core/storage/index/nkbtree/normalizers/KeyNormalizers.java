@@ -110,4 +110,35 @@ public class KeyNormalizers {
 
     return result;
   }
+
+  public byte[] normalize(final Object key, final OType type) {
+    final byte[] result;
+
+    if (key == null) {
+      result = new byte[] {BinaryBTree.NULL_PREFIX};
+    } else if (key instanceof OAlwaysLessKey) {
+      result = new byte[] {BinaryBTree.ALWAYS_LESS_PREFIX};
+    } else if (key instanceof OAlwaysGreaterKey) {
+      result = new byte[] {BinaryBTree.ALWAYS_GREATER_PREFIX};
+    } else if (type == OType.STRING) {
+      final byte[] collatedKey = collator.getCollationKey((String) key).toByteArray();
+      result = new byte[collatedKey.length + 1];
+
+      result[0] = BinaryBTree.DATA_PREFIX;
+
+      System.arraycopy(collatedKey, 0, result, 1, collatedKey.length);
+    } else {
+      final KeyNormalizer keyNormalizer = normalizers.get(type);
+      if (keyNormalizer == null) {
+        throw new UnsupportedOperationException("Type " + type + " is currently not supported");
+      }
+
+      result = new byte[keyNormalizer.normalizedSize(key) + 1];
+      result[0] = BinaryBTree.DATA_PREFIX;
+
+      keyNormalizer.normalize(key, 1, result);
+    }
+
+    return result;
+  }
 }

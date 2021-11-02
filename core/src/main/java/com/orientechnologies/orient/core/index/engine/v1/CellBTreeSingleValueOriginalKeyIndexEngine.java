@@ -7,7 +7,8 @@ import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.engine.OSingleValueIndexEngine;
+import com.orientechnologies.orient.core.index.engine.BaseOriginalKeyIndexEngine;
+import com.orientechnologies.orient.core.index.engine.SingleValueIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -19,8 +20,8 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public final class OCellBTreeSingleValueIndexEngine
-    implements OSingleValueIndexEngine, OCellBTreeIndexEngine {
+public final class CellBTreeSingleValueOriginalKeyIndexEngine
+    implements SingleValueIndexEngine, CellBTreeIndexEngine, BaseOriginalKeyIndexEngine {
   private static final String DATA_FILE_EXTENSION = ".cbt";
   private static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
@@ -28,7 +29,7 @@ public final class OCellBTreeSingleValueIndexEngine
   private final String name;
   private final int id;
 
-  public OCellBTreeSingleValueIndexEngine(
+  public CellBTreeSingleValueOriginalKeyIndexEngine(
       int id, String name, OAbstractPaginatedStorage storage, int version) {
     this.name = name;
     this.id = id;

@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.index.OIndexUpdateAction;
+import com.orientechnologies.orient.core.index.engine.BaseOriginalKeyIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -54,7 +55,7 @@ import java.util.stream.StreamSupport;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 15.07.13
  */
-public final class OHashTableIndexEngine implements OIndexEngine {
+public final class OHashTableIndexEngine implements OIndexEngine, BaseOriginalKeyIndexEngine {
   public static final int VERSION = 3;
 
   public static final String METADATA_FILE_EXTENSION = ".him";

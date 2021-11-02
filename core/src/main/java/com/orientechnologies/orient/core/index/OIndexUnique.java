@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
+import com.orientechnologies.orient.core.index.engine.BaseIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
  */
 public class OIndexUnique extends IndexOneValueOriginaltKey {
 
-  private final OBaseIndexEngine.Validator<Object, ORID> uniqueValidator =
+  private final BaseIndexEngine.Validator<Object, ORID> uniqueValidator =
       (key, oldValue, newValue) -> {
         if (oldValue != null) {
           // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
@@ -52,7 +52,7 @@ public class OIndexUnique extends IndexOneValueOriginaltKey {
                   key);
             }
           } else {
-            return OBaseIndexEngine.Validator.IGNORE;
+            return BaseIndexEngine.Validator.IGNORE;
           }
         }
 

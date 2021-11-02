@@ -38,7 +38,7 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeMultiValueIndexEngine;
+import com.orientechnologies.orient.core.index.engine.v1.CellBTreeMultiValueOriginalKeyIndexEngine;
 import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
@@ -132,8 +132,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     OClusterBasedStorageConfiguration.DATA_FILE_EXTENSION,
     OClusterBasedStorageConfiguration.TREE_DATA_FILE_EXTENSION,
     OClusterBasedStorageConfiguration.TREE_NULL_FILE_EXTENSION,
-    OCellBTreeMultiValueIndexEngine.DATA_FILE_EXTENSION,
-    OCellBTreeMultiValueIndexEngine.M_CONTAINER_EXTENSION,
+    CellBTreeMultiValueOriginalKeyIndexEngine.DATA_FILE_EXTENSION,
+    CellBTreeMultiValueOriginalKeyIndexEngine.M_CONTAINER_EXTENSION,
     DoubleWriteLogGL.EXTENSION,
     FreeSpaceMap.DEF_EXTENSION
   };

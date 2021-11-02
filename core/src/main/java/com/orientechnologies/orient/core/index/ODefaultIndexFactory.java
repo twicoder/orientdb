@@ -17,10 +17,10 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
-import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeIndexEngine;
-import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeMultiValueIndexEngine;
-import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeSingleValueIndexEngine;
+import com.orientechnologies.orient.core.index.engine.BaseIndexEngine;
+import com.orientechnologies.orient.core.index.engine.v1.CellBTreeIndexEngine;
+import com.orientechnologies.orient.core.index.engine.v1.CellBTreeMultiValueOriginalKeyIndexEngine;
+import com.orientechnologies.orient.core.index.engine.v1.CellBTreeSingleValueOriginalKeyIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -194,14 +194,14 @@ public class ODefaultIndexFactory implements OIndexFactory {
       case SBTREE_ALGORITHM:
         return OSBTreeIndexEngine.VERSION;
       case CELL_BTREE_ALGORITHM:
-        return OCellBTreeIndexEngine.VERSION;
+        return CellBTreeIndexEngine.VERSION;
     }
 
     throw new IllegalStateException("Invalid algorithm name " + algorithm);
   }
 
   @Override
-  public OBaseIndexEngine createIndexEngine(
+  public BaseIndexEngine createIndexEngine(
       int indexId,
       String algorithm,
       String name,
@@ -215,7 +215,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
     if (algorithm == null) {
       throw new OIndexException("Name of algorithm is not specified");
     }
-    final OBaseIndexEngine indexEngine;
+    final BaseIndexEngine indexEngine;
     String storageType = storage.getType();
 
     if (storageType.equals("distributed")) {
@@ -234,11 +234,11 @@ public class ODefaultIndexFactory implements OIndexFactory {
           case CELL_BTREE_ALGORITHM:
             if (multiValue) {
               indexEngine =
-                  new OCellBTreeMultiValueIndexEngine(
+                  new CellBTreeMultiValueOriginalKeyIndexEngine(
                       indexId, name, (OAbstractPaginatedStorage) storage, version);
             } else {
               indexEngine =
-                  new OCellBTreeSingleValueIndexEngine(
+                  new CellBTreeSingleValueOriginalKeyIndexEngine(
                       indexId, name, (OAbstractPaginatedStorage) storage, version);
             }
             break;
