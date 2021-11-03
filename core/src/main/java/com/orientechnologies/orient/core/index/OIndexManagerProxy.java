@@ -144,7 +144,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract>
   }
 
   @Override
-  public OIndexUnique getClassUniqueIndex(final String className) {
+  public IndexUniqueOriginalKey getClassUniqueIndex(final String className) {
     return delegate.getClassUniqueIndex(className);
   }
 

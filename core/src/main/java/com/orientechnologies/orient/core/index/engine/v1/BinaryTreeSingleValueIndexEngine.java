@@ -19,7 +19,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public class BinaryTreeSingleValueIndexEngine implements SingleValueBinaryKeyIndexEngine {
+public class BinaryTreeSingleValueIndexEngine
+    implements SingleValueBinaryKeyIndexEngine, BinaryTreeIndexEngine {
   private static final String DATA_FILE_EXTENSION = ".bbt";
 
   private final String name;
@@ -86,7 +87,6 @@ public class BinaryTreeSingleValueIndexEngine implements SingleValueBinaryKeyInd
 
   @Override
   public void delete(OAtomicOperation atomicOperation) throws IOException {
-    doClearTree(atomicOperation);
     bTree.delete(atomicOperation);
   }
 
@@ -128,11 +128,6 @@ public class BinaryTreeSingleValueIndexEngine implements SingleValueBinaryKeyInd
   @Override
   public String getIndexNameByKey(Object key) {
     return name;
-  }
-
-  @Override
-  public boolean rawRemove(OAtomicOperation atomicOperation, byte[] key) throws IOException {
-    return bTree.remove(atomicOperation, key) != null;
   }
 
   @Override

@@ -896,6 +896,12 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       Integer.class,
       10240),
 
+  BINARY_TREE_MAX_KEY_SIZE(
+      "btree.maxKeySize",
+      "Maximum size of a key, which can be put in the SBTree in bytes (8192 by default)",
+      Integer.class,
+      8192),
+
   SBTREE_MAX_EMBEDDED_VALUE_SIZE(
       "sbtree.maxEmbeddedValueSize",
       "Maximum size of value which can be put in an SBTree without creation link to a standalone page in bytes (40960 by default)",

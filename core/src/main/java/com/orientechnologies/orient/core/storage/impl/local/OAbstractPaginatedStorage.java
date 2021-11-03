@@ -76,14 +76,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.IndexInternal;
-import com.orientechnologies.orient.core.index.OIndexAbstract;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
-import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
-import com.orientechnologies.orient.core.index.OIndexes;
-import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.engine.*;
 import com.orientechnologies.orient.core.index.engine.v1.CellBTreeMultiValueOriginalKeyIndexEngine;
 import com.orientechnologies.orient.core.index.engine.v1.CellBTreeSingleValueOriginalKeyIndexEngine;
@@ -288,6 +281,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private static void checkPageSizeAndRelatedParametersInGlobalConfiguration() {
     final int pageSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
     final int maxKeySize = OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger();
+    final int binaryTreeMaxKeySize =
+        OGlobalConfiguration.BINARY_TREE_MAX_KEY_SIZE.getValueAsInteger();
 
     if (maxKeySize > pageSize / 4) {
       throw new OStorageException(
@@ -303,6 +298,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               + OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getKey()
               + " = "
               + maxKeySize);
+    }
+
+    if (binaryTreeMaxKeySize > pageSize / 8) {
+      throw new OStorageException(
+          "Value of parameter "
+              + OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getKey()
+              + " should be at least 8 times bigger than value of parameter "
+              + OGlobalConfiguration.BINARY_TREE_MAX_KEY_SIZE.getKey()
+              + " but real values are :"
+              + OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getKey()
+              + " = "
+              + pageSize
+              + " , "
+              + OGlobalConfiguration.BINARY_TREE_MAX_KEY_SIZE.getKey()
+              + " = "
+              + binaryTreeMaxKeySize);
     }
   }
 
@@ -2705,9 +2716,27 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 serializerId = -1;
               }
 
-              // this property is used for autosharded index
-              if (metadata != null && metadata.containsField("partitions")) {
-                engineProperties.put("partitions", metadata.field("partitions"));
+              if (metadata != null) {
+                // this property is used for autosharded index
+                if (metadata.containsField("partitions")) {
+                  engineProperties.put("partitions", metadata.field("partitions"));
+                } else {
+                  engineProperties.put("partitions", Integer.toString(clustersToIndex.size()));
+                }
+
+                if (metadata.containsField(ODefaultIndexFactory.BINARY_TREE_DECOMPOSITION)) {
+                  engineProperties.put(
+                      ODefaultIndexFactory.BINARY_TREE_DECOMPOSITION,
+                      metadata
+                          .getProperty(ODefaultIndexFactory.BINARY_TREE_DECOMPOSITION)
+                          .toString());
+                }
+
+                if (metadata.containsField(ODefaultIndexFactory.BINARY_TREE_LOCALE)) {
+                  engineProperties.put(
+                      ODefaultIndexFactory.BINARY_TREE_LOCALE,
+                      metadata.getProperty(ODefaultIndexFactory.BINARY_TREE_LOCALE));
+                }
               } else {
                 engineProperties.put("partitions", Integer.toString(clustersToIndex.size()));
               }
@@ -3173,6 +3202,54 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return ((V1IndexEngine) engine).get(key);
   }
 
+  public Stream<ORawPair<byte[], ORID>> getIndexBinaryEntries(int indexId, final Object key)
+      throws OInvalidIndexEngineIdException {
+    final int engineAPIVersion = extractEngineAPIVersion(indexId);
+    if (engineAPIVersion != 1) {
+      throw new IllegalStateException(
+          "Unsupported version of index engine API. Required 1 but found " + engineAPIVersion);
+    }
+
+    indexId = extractInternalId(indexId);
+
+    try {
+      if (transaction.get() != null) {
+        return doGetIndexEntries(indexId, key);
+      }
+
+      stateLock.acquireReadLock();
+      try {
+        checkIfThreadIsInterrupted();
+        checkOpenness();
+
+        return doGetIndexEntries(indexId, key);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Throwable ie) {
+      throw logAndPrepareForRethrow(ie, false);
+    }
+  }
+
+  private Stream<ORawPair<byte[], ORID>> doGetIndexEntries(final int indexId, final Object key)
+      throws OInvalidIndexEngineIdException {
+    checkIndexId(indexId);
+
+    final BaseIndexEngine engine = indexEngines.get(indexId);
+    assert indexId == engine.getId();
+
+    if (engine instanceof BaseBinaryKeyIndexEngine) {
+      return ((BaseBinaryKeyIndexEngine) engine)
+          .iterateEntriesBetween(key, true, key, true, true, null);
+    }
+
+    throw new OIndexException("Index does not support iteration over binary entries");
+  }
+
   public String getIndexNameByKey(int indexId, final Object key)
       throws OInvalidIndexEngineIdException {
     indexId = extractInternalId(indexId);
@@ -3630,7 +3707,68 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
     }
 
-    throw new OIndexException("Index " + engine.getName() + " does not support iteration by keys");
+    throw new OIndexException(
+        "Index " + engine.getName() + " does not support iteration by binary keys");
+  }
+
+  public Stream<ORawPair<byte[], ORID>> iterateBinaryIndexEntriesBetween(
+      int indexId,
+      final Object rangeFrom,
+      final boolean fromInclusive,
+      final Object rangeTo,
+      final boolean toInclusive,
+      final boolean ascSortOrder,
+      final BaseIndexEngine.ValuesTransformer transformer)
+      throws OInvalidIndexEngineIdException {
+    indexId = extractInternalId(indexId);
+
+    try {
+      if (transaction.get() != null) {
+        return doIterateBinaryIndexEntriesBetween(
+            indexId, rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
+      }
+
+      stateLock.acquireReadLock();
+      try {
+        checkIfThreadIsInterrupted();
+        checkOpenness();
+
+        return doIterateBinaryIndexEntriesBetween(
+            indexId, rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Throwable ie) {
+      throw logAndPrepareForRethrow(ie, false);
+    }
+  }
+
+  private Stream<ORawPair<byte[], ORID>> doIterateBinaryIndexEntriesBetween(
+      final int indexId,
+      final Object rangeFrom,
+      final boolean fromInclusive,
+      final Object rangeTo,
+      final boolean toInclusive,
+      final boolean ascSortOrder,
+      final BaseIndexEngine.ValuesTransformer transformer)
+      throws OInvalidIndexEngineIdException {
+    checkIndexId(indexId);
+
+    final BaseIndexEngine engine = indexEngines.get(indexId);
+    assert indexId == engine.getId();
+
+    if (engine instanceof BaseBinaryKeyIndexEngine) {
+      return ((BaseBinaryKeyIndexEngine) engine)
+          .iterateEntriesBetween(
+              rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
+    }
+
+    throw new OIndexException(
+        "Index " + engine.getName() + " does not support iteration by binary keys");
   }
 
   public Stream<ORawPair<Object, ORID>> iterateIndexEntriesMajor(
@@ -3683,6 +3821,61 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     throw new OIndexException("Index " + engine.getName() + " does not support iteration by keys");
+  }
+
+  public Stream<ORawPair<byte[], ORID>> iterateBinaryIndexEntriesMajor(
+      int indexId,
+      final Object fromKey,
+      final boolean isInclusive,
+      final boolean ascSortOrder,
+      final BaseIndexEngine.ValuesTransformer transformer)
+      throws OInvalidIndexEngineIdException {
+    indexId = extractInternalId(indexId);
+
+    try {
+      if (transaction.get() != null) {
+        return doIterateBinaryIndexEntriesMajor(
+            indexId, fromKey, isInclusive, ascSortOrder, transformer);
+      }
+
+      stateLock.acquireReadLock();
+      try {
+        checkIfThreadIsInterrupted();
+        checkOpenness();
+
+        return doIterateBinaryIndexEntriesMajor(
+            indexId, fromKey, isInclusive, ascSortOrder, transformer);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Throwable ie) {
+      throw logAndPrepareForRethrow(ie, false);
+    }
+  }
+
+  private Stream<ORawPair<byte[], ORID>> doIterateBinaryIndexEntriesMajor(
+      final int indexId,
+      final Object fromKey,
+      final boolean isInclusive,
+      final boolean ascSortOrder,
+      final BaseIndexEngine.ValuesTransformer transformer)
+      throws OInvalidIndexEngineIdException {
+    checkIndexId(indexId);
+
+    final BaseIndexEngine engine = indexEngines.get(indexId);
+    assert indexId == engine.getId();
+
+    if (engine instanceof BaseBinaryKeyIndexEngine) {
+      return ((BaseBinaryKeyIndexEngine) engine)
+          .iterateEntriesMajor(fromKey, isInclusive, ascSortOrder, transformer);
+    }
+
+    throw new OIndexException(
+        "Index " + engine.getName() + " does not support iteration by binary keys");
   }
 
   public Stream<ORawPair<Object, ORID>> iterateIndexEntriesMinor(
@@ -3765,6 +3958,89 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  public Stream<ORawPair<byte[], ORID>> getIndexBinaryStream(
+      int indexId, final BaseIndexEngine.ValuesTransformer valuesTransformer)
+      throws OInvalidIndexEngineIdException {
+    indexId = extractInternalId(indexId);
+
+    try {
+      if (transaction.get() != null) {
+        return doGetIndexBinaryStream(indexId, valuesTransformer);
+      }
+
+      stateLock.acquireReadLock();
+      try {
+        checkIfThreadIsInterrupted();
+        checkOpenness();
+
+        return doGetIndexBinaryStream(indexId, valuesTransformer);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Throwable ie) {
+      throw logAndPrepareForRethrow(ie, false);
+    }
+  }
+
+  public Stream<ORawPair<byte[], ORID>> iterateBinaryIndexEntriesMinor(
+      int indexId,
+      final Object toKey,
+      final boolean isInclusive,
+      final boolean ascSortOrder,
+      final BaseIndexEngine.ValuesTransformer transformer)
+      throws OInvalidIndexEngineIdException {
+    indexId = extractInternalId(indexId);
+
+    try {
+      if (transaction.get() != null) {
+        return doIterateBinaryIndexEntriesMinor(
+            indexId, toKey, isInclusive, ascSortOrder, transformer);
+      }
+
+      stateLock.acquireReadLock();
+      try {
+        checkIfThreadIsInterrupted();
+        checkOpenness();
+
+        return doIterateBinaryIndexEntriesMinor(
+            indexId, toKey, isInclusive, ascSortOrder, transformer);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Throwable ie) {
+      throw logAndPrepareForRethrow(ie, false);
+    }
+  }
+
+  private Stream<ORawPair<byte[], ORID>> doIterateBinaryIndexEntriesMinor(
+      final int indexId,
+      final Object toKey,
+      final boolean isInclusive,
+      final boolean ascSortOrder,
+      final BaseIndexEngine.ValuesTransformer transformer)
+      throws OInvalidIndexEngineIdException {
+    checkIndexId(indexId);
+
+    final BaseIndexEngine engine = indexEngines.get(indexId);
+    assert indexId == engine.getId();
+
+    if (engine instanceof BaseBinaryKeyIndexEngine) {
+      return ((BaseBinaryKeyIndexEngine) engine)
+          .iterateEntriesMinor(toKey, isInclusive, ascSortOrder, transformer);
+    }
+
+    throw new OIndexException(
+        "Index " + engine.getName() + " does not support iteration by binary keys");
+  }
+
   private Stream<ORawPair<Object, ORID>> doGetIndexStream(
       final int indexId, final BaseIndexEngine.ValuesTransformer valuesTransformer)
       throws OInvalidIndexEngineIdException {
@@ -3778,6 +4054,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     throw new OIndexException("Index " + engine.getName() + " does not support iteration by keys");
+  }
+
+  private Stream<ORawPair<byte[], ORID>> doGetIndexBinaryStream(
+      final int indexId, final BaseIndexEngine.ValuesTransformer valuesTransformer)
+      throws OInvalidIndexEngineIdException {
+    checkIndexId(indexId);
+
+    final BaseIndexEngine engine = indexEngines.get(indexId);
+    assert indexId == engine.getId();
+
+    if (engine instanceof BaseBinaryKeyIndexEngine) {
+      return ((BaseBinaryKeyIndexEngine) engine).stream(valuesTransformer);
+    }
+
+    throw new OIndexException(
+        "Index " + engine.getName() + " does not support iteration by binary keys");
   }
 
   public Stream<ORawPair<Object, ORID>> getIndexDescStream(
@@ -3808,6 +4100,34 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  public Stream<ORawPair<byte[], ORID>> getIndexBinaryDescStream(
+      int indexId, final BaseIndexEngine.ValuesTransformer valuesTransformer)
+      throws OInvalidIndexEngineIdException {
+    indexId = extractInternalId(indexId);
+
+    try {
+      if (transaction.get() != null) {
+        return doGetIndexBinaryDescStream(indexId, valuesTransformer);
+      }
+
+      stateLock.acquireReadLock();
+      try {
+        checkIfThreadIsInterrupted();
+        checkOpenness();
+
+        return doGetIndexBinaryDescStream(indexId, valuesTransformer);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Throwable ie) {
+      throw logAndPrepareForRethrow(ie, false);
+    }
+  }
+
   private Stream<ORawPair<Object, ORID>> doGetIndexDescStream(
       final int indexId, final BaseIndexEngine.ValuesTransformer valuesTransformer)
       throws OInvalidIndexEngineIdException {
@@ -3821,6 +4141,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     throw new OIndexException("Index " + engine.getName() + " does not support iteration by keys");
+  }
+
+  private Stream<ORawPair<byte[], ORID>> doGetIndexBinaryDescStream(
+      final int indexId, final BaseIndexEngine.ValuesTransformer valuesTransformer)
+      throws OInvalidIndexEngineIdException {
+    checkIndexId(indexId);
+
+    final BaseIndexEngine engine = indexEngines.get(indexId);
+    assert indexId == engine.getId();
+
+    if (engine instanceof BaseBinaryKeyIndexEngine) {
+      return ((BaseBinaryKeyIndexEngine) engine).descStream(valuesTransformer);
+    }
+
+    throw new OIndexException(
+        "Index " + engine.getName() + " does not support iteration by binary keys");
   }
 
   public Stream<Object> getIndexKeyStream(int indexId) throws OInvalidIndexEngineIdException {
@@ -3849,6 +4185,32 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  public Stream<byte[]> getIndexBinaryKeyStream(int indexId) throws OInvalidIndexEngineIdException {
+    indexId = extractInternalId(indexId);
+
+    try {
+      if (transaction.get() != null) {
+        return doGetIndexBinaryKeyStream(indexId);
+      }
+
+      stateLock.acquireReadLock();
+      try {
+        checkIfThreadIsInterrupted();
+        checkOpenness();
+
+        return doGetIndexBinaryKeyStream(indexId);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Throwable ie) {
+      throw logAndPrepareForRethrow(ie, false);
+    }
+  }
+
   private Stream<Object> doGetIndexKeyStream(final int indexId)
       throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
@@ -3861,6 +4223,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     throw new OIndexException("Index " + engine.getName() + " does not support iteration by keys");
+  }
+
+  private Stream<byte[]> doGetIndexBinaryKeyStream(final int indexId)
+      throws OInvalidIndexEngineIdException {
+    checkIndexId(indexId);
+
+    final BaseIndexEngine engine = indexEngines.get(indexId);
+    assert indexId == engine.getId();
+
+    if (engine instanceof BaseBinaryKeyIndexEngine) {
+      return ((BaseBinaryKeyIndexEngine) engine).keyStream();
+    }
+
+    throw new OIndexException(
+        "Index " + engine.getName() + " does not support iteration by binary keys");
   }
 
   public long getIndexSize(int indexId, final BaseIndexEngine.ValuesTransformer transformer)

@@ -5,7 +5,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.common.util.ORawPair;
-import com.orientechnologies.orient.core.exception.NotEmptyComponentCanNotBeRemovedException;
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -1167,15 +1166,6 @@ public final class BinaryBTree extends ODurableComponent {
         operation -> {
           acquireExclusiveLock();
           try {
-            final long size = size();
-            if (size > 0) {
-              throw new NotEmptyComponentCanNotBeRemovedException(
-                  getName()
-                      + " : Not empty index can not be deleted. Index has "
-                      + size
-                      + " records");
-            }
-
             deleteFile(atomicOperation, fileId);
           } finally {
             releaseExclusiveLock();
@@ -1203,67 +1193,68 @@ public final class BinaryBTree extends ODurableComponent {
         operation -> {
           acquireExclusiveLock();
           try {
-            final ORID removedValue;
-
-            final Optional<RemoveSearchResult> bucketSearchResult =
-                findBucketForRemove(key, atomicOperation);
-            if (bucketSearchResult.isPresent()) {
-              final List<ORawPair<byte[], ORID>> leftOvers;
-              final RemoveSearchResult removeSearchResult = bucketSearchResult.get();
-              final OCacheEntry keyBucketCacheEntry =
-                  loadPageForWrite(
-                      atomicOperation, fileId, removeSearchResult.leafPageIndex, false, true);
-
-              final byte[] rawValue;
-              final int bucketSize;
-              try {
-                final Bucket keyBucket = new Bucket(keyBucketCacheEntry);
-                rawValue = keyBucket.getRawValue(removeSearchResult.leafEntryPageIndex);
-                bucketSize =
-                    keyBucket.removeLeafEntry(
-                        removeSearchResult.leafEntryPageIndex,
-                        key.length - removeSearchResult.keyPrefixLen);
-                updateSize(-1, atomicOperation);
-
-                final int clusterId = OShortSerializer.INSTANCE.deserializeNative(rawValue, 0);
-                final long clusterPosition =
-                    OLongSerializer.INSTANCE.deserializeNative(
-                        rawValue, OShortSerializer.SHORT_SIZE);
-
-                removedValue = new ORecordId(clusterId, clusterPosition);
-
-                // skip balancing of the tree if leaf is a root.
-                if (bucketSize == 0 && removeSearchResult.path.size() > 0) {
-                  final Optional<ArrayList<ORawPair<byte[], ORID>>> balanceResult =
-                      balanceLeafNodeAfterItemDelete(
-                          atomicOperation, removeSearchResult, keyBucket);
-
-                  if (balanceResult.isPresent()) {
-                    addToFreeList(atomicOperation, (int) removeSearchResult.leafPageIndex);
-                    leftOvers = balanceResult.get();
-                  } else {
-                    leftOvers = Collections.emptyList();
-                  }
-                } else {
-                  leftOvers = Collections.emptyList();
-                }
-              } finally {
-                releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
-              }
-
-              for (final ORawPair<byte[], ORID> entry : leftOvers) {
-                doUpdate(atomicOperation, null, entry.first, entry.second, null);
-              }
-
-            } else {
-              return null;
-            }
-
-            return removedValue;
+            return doRemove(atomicOperation, key);
           } finally {
             releaseExclusiveLock();
           }
         });
+  }
+
+  private ORID doRemove(OAtomicOperation atomicOperation, byte[] key) throws IOException {
+    final ORID removedValue;
+
+    final Optional<RemoveSearchResult> bucketSearchResult =
+        findBucketForRemove(key, atomicOperation);
+    if (bucketSearchResult.isPresent()) {
+      final List<ORawPair<byte[], ORID>> leftOvers;
+      final RemoveSearchResult removeSearchResult = bucketSearchResult.get();
+      final OCacheEntry keyBucketCacheEntry =
+          loadPageForWrite(atomicOperation, fileId, removeSearchResult.leafPageIndex, false, true);
+
+      final byte[] rawValue;
+      final int bucketSize;
+      try {
+        final Bucket keyBucket = new Bucket(keyBucketCacheEntry);
+        rawValue = keyBucket.getRawValue(removeSearchResult.leafEntryPageIndex);
+        bucketSize =
+            keyBucket.removeLeafEntry(
+                removeSearchResult.leafEntryPageIndex,
+                key.length - removeSearchResult.keyPrefixLen);
+        updateSize(-1, atomicOperation);
+
+        final int clusterId = OShortSerializer.INSTANCE.deserializeNative(rawValue, 0);
+        final long clusterPosition =
+            OLongSerializer.INSTANCE.deserializeNative(rawValue, OShortSerializer.SHORT_SIZE);
+
+        removedValue = new ORecordId(clusterId, clusterPosition);
+
+        // skip balancing of the tree if leaf is a root.
+        if (bucketSize == 0 && removeSearchResult.path.size() > 0) {
+          final Optional<ArrayList<ORawPair<byte[], ORID>>> balanceResult =
+              balanceLeafNodeAfterItemDelete(atomicOperation, removeSearchResult, keyBucket);
+
+          if (balanceResult.isPresent()) {
+            addToFreeList(atomicOperation, (int) removeSearchResult.leafPageIndex);
+            leftOvers = balanceResult.get();
+          } else {
+            leftOvers = Collections.emptyList();
+          }
+        } else {
+          leftOvers = Collections.emptyList();
+        }
+      } finally {
+        releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
+      }
+
+      for (final ORawPair<byte[], ORID> entry : leftOvers) {
+        doUpdate(atomicOperation, null, entry.first, entry.second, null);
+      }
+
+    } else {
+      return null;
+    }
+
+    return removedValue;
   }
 
   public byte[] firstKey() {

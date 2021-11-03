@@ -371,13 +371,13 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
       indexes.addAll(propertyIndexes);
   }
 
-  public OIndexUnique getClassUniqueIndex(final String className) {
+  public IndexUniqueOriginalKey getClassUniqueIndex(final String className) {
     final Map<OMultiKey, Set<OIndex>> propertyIndex = getIndexOnProperty(className);
 
     if (propertyIndex != null)
       for (final Set<OIndex> propertyIndexes : propertyIndex.values())
         for (final OIndex index : propertyIndexes)
-          if (index instanceof OIndexUnique) return (OIndexUnique) index;
+          if (index instanceof IndexUniqueOriginalKey) return (IndexUniqueOriginalKey) index;
 
     return null;
   }

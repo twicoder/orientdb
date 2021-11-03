@@ -21,12 +21,12 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local;
 
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.IndexInternal;
+import com.orientechnologies.orient.core.index.IndexNotUniqueOriginalKey;
+import com.orientechnologies.orient.core.index.IndexUniqueOriginalKey;
 import com.orientechnologies.orient.core.index.ODefaultIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexDictionary;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexFactory;
-import com.orientechnologies.orient.core.index.OIndexNotUnique;
-import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.index.engine.BaseIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -100,7 +100,7 @@ public final class OHashIndexFactory implements OIndexFactory {
     final int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();
 
     if (OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString().equals(indexType))
-      return new OIndexUnique(
+      return new IndexUniqueOriginalKey(
           name,
           indexType,
           algorithm,
@@ -110,7 +110,7 @@ public final class OHashIndexFactory implements OIndexFactory {
           metadata,
           binaryFormatVersion);
     else if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType))
-      return new OIndexNotUnique(
+      return new IndexNotUniqueOriginalKey(
           name,
           indexType,
           algorithm,

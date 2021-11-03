@@ -266,7 +266,7 @@ public interface OIndexManager {
    * @deprecated Manual indexes are deprecated and will be removed
    */
   @Deprecated
-  OIndexUnique getClassUniqueIndex(String className);
+  IndexUniqueOriginalKey getClassUniqueIndex(String className);
 
   /**
    * Searches for index for a specified class with specified name.

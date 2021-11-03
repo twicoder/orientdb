@@ -792,7 +792,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       return new OIndexTxAwareMultiValueOriginal(database, indexInternal);
     } else if (indexInternal instanceof OIndexDictionary) {
       return new OIndexTxAwareDictionary(database, indexInternal);
-    } else if (indexInternal instanceof IndexOneValueOriginaltKey) {
+    } else if (indexInternal instanceof IndexOneValueOriginalKey) {
       return new OIndexTxAwareOneValueOriginalKey(database, indexInternal);
     }
 

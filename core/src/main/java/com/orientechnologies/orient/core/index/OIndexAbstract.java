@@ -739,14 +739,7 @@ public abstract class OIndexAbstract implements IndexInternal {
   private void doDelete() {
     while (true)
       try {
-
-        if (this instanceof IndexInternalBinaryKey) {
-          final IndexInternalBinaryKey indexInternalBinary = (IndexInternalBinaryKey) this;
-          //noinspection ObjectAllocationInLoop
-          try (final Stream<ORawPair<byte[], ORID>> stream = indexInternalBinary.stream()) {
-            stream.forEach((pair) -> indexInternalBinary.rawRemove(pair.first, pair.second));
-          }
-        } else {
+        if (this instanceof IndexInternalOriginalKey) {
           final IndexInternalOriginalKey indexInternalObject = (IndexInternalOriginalKey) this;
           try (final Stream<ORawPair<Object, ORID>> stream = indexInternalObject.stream()) {
             stream.forEach((pair) -> remove(pair.first, pair.second));

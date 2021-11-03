@@ -43,9 +43,9 @@ import java.util.stream.Stream;
  *
  * @author Luca Garulli
  */
-public abstract class IndexOneValueOriginaltKey extends OIndexAbstract
+public abstract class IndexOneValueOriginalKey extends OIndexAbstract
     implements IndexInternalOriginalKey {
-  public IndexOneValueOriginaltKey(
+  public IndexOneValueOriginalKey(
       String name,
       final String type,
       String algorithm,
@@ -110,14 +110,14 @@ public abstract class IndexOneValueOriginaltKey extends OIndexAbstract
     }
   }
 
-  public IndexOneValueOriginaltKey create(
+  public IndexOneValueOriginalKey create(
       final String name,
       final OIndexDefinition indexDefinition,
       final String clusterIndexName,
       final Set<String> clustersToIndex,
       boolean rebuild,
       final OProgressListener progressListener) {
-    return (IndexOneValueOriginaltKey)
+    return (IndexOneValueOriginalKey)
         super.create(
             indexDefinition,
             clusterIndexName,

@@ -42,11 +42,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * Interface to handle index.
- *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- */
+/** Interface to handle index. */
 public interface IndexInternal extends OIndex {
 
   String CONFIG_KEYTYPE = "keyType";

@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.util.ORawPair;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import java.util.Collection;
 import java.util.stream.Stream;
@@ -12,14 +11,6 @@ public interface IndexInternalBinaryKey extends IndexInternal {
   Stream<ORawPair<byte[], ORID>> descStream();
 
   Stream<byte[]> keyStream();
-
-  /**
-   * Removes an entry by its key and value.
-   *
-   * @param key The entry's key to remove
-   * @return True if the entry has been found and removed, otherwise false
-   */
-  boolean rawRemove(byte[] key, OIdentifiable rid);
 
   /**
    * Returns stream which presents subset of index data between passed in keys.

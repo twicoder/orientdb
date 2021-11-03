@@ -28,12 +28,8 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
-/**
- * Index implementation that allows only one value for a key.
- *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- */
-public class OIndexUnique extends IndexOneValueOriginaltKey {
+/** Index implementation that allows only one value for a key. */
+public class IndexUniqueOriginalKey extends IndexOneValueOriginalKey {
 
   private final BaseIndexEngine.Validator<Object, ORID> uniqueValidator =
       (key, oldValue, newValue) -> {
@@ -62,7 +58,7 @@ public class OIndexUnique extends IndexOneValueOriginaltKey {
         return newValue.getIdentity();
       };
 
-  public OIndexUnique(
+  public IndexUniqueOriginalKey(
       String name,
       String typeId,
       String algorithm,
@@ -83,7 +79,7 @@ public class OIndexUnique extends IndexOneValueOriginaltKey {
   }
 
   @Override
-  public IndexOneValueOriginaltKey put(Object key, final OIdentifiable value) {
+  public IndexOneValueOriginalKey put(Object key, final OIdentifiable value) {
     key = getCollatingValue(key);
 
     acquireSharedLock();

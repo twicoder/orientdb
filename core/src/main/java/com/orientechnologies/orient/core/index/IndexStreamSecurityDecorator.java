@@ -30,6 +30,27 @@ public class IndexStreamSecurityDecorator {
         (pair) -> IndexInternal.securityFilterOnRead(originalIndex, pair.second) != null);
   }
 
+  public static Stream<ORawPair<byte[], ORID>> decorateBinaryStream(
+      OIndex originalIndex, Stream<ORawPair<byte[], ORID>> stream) {
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    if (db == null) {
+      return stream;
+    }
+
+    String indexClass = originalIndex.getDefinition().getClassName();
+    if (indexClass == null) {
+      return stream;
+    }
+    OSecurityInternal security = db.getSharedContext().getSecurity();
+    if (security instanceof OSecurityShared
+        && !((OSecurityShared) security).couldHaveActivePredicateSecurityRoles(db, indexClass)) {
+      return stream;
+    }
+
+    return stream.filter(
+        (pair) -> IndexInternal.securityFilterOnRead(originalIndex, pair.second) != null);
+  }
+
   public static Stream<ORID> decorateRidStream(OIndex originalIndex, Stream<ORID> stream) {
     ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db == null) {

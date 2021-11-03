@@ -120,10 +120,6 @@ public abstract class IndexMultiValuesOriginalKey extends OIndexAbstract
     acquireSharedLock();
 
     try {
-      if (!singleValue.getIdentity().isValid()) {
-        (singleValue.getRecord()).save();
-      }
-
       final ORID identity = singleValue.getIdentity();
 
       while (true) {

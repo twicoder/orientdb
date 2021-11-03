@@ -4,7 +4,7 @@ import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndexUnique;
+import com.orientechnologies.orient.core.index.IndexUniqueOriginalKey;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import java.util.Random;
@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
  */
 public class MVRBTreeInsertionSpeedTest extends SpeedTestMonoThread {
   private ODatabaseDocumentTx databaseDocumentTx;
-  private OIndexUnique index;
+  private IndexUniqueOriginalKey index;
   private Random random = new Random();
 
   public MVRBTreeInsertionSpeedTest() {
@@ -43,7 +43,7 @@ public class MVRBTreeInsertionSpeedTest extends SpeedTestMonoThread {
     databaseDocumentTx.create();
 
     index =
-        (OIndexUnique)
+        (IndexUniqueOriginalKey)
             databaseDocumentTx
                 .getMetadata()
                 .getIndexManagerInternal()

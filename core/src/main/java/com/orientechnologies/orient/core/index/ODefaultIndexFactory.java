@@ -15,22 +15,19 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.ibm.icu.text.Collator;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.engine.BaseIndexEngine;
-import com.orientechnologies.orient.core.index.engine.v1.CellBTreeIndexEngine;
-import com.orientechnologies.orient.core.index.engine.v1.CellBTreeMultiValueOriginalKeyIndexEngine;
-import com.orientechnologies.orient.core.index.engine.v1.CellBTreeSingleValueOriginalKeyIndexEngine;
+import com.orientechnologies.orient.core.index.engine.v1.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.index.engine.ORemoteIndexEngine;
 import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Default OrientDB index factory for indexes based on SBTree.<br>
@@ -50,6 +47,19 @@ public class ODefaultIndexFactory implements OIndexFactory {
   public static final String NONE_VALUE_CONTAINER = "NONE";
   static final String CELL_BTREE_ALGORITHM = "CELL_BTREE";
 
+  public static final String BINARY_TREE_ALGORITHM = "BINARY_TREE";
+
+  public static final String BINARY_TREE_LOCALE = "locale";
+  public static final String BINARY_TREE_DECOMPOSITION = "decomposition";
+
+  private static final int SPLITERATOR_CACHE_SIZE =
+      OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
+
+  private static final int MAX_KEY_SIZE =
+      OGlobalConfiguration.BINARY_TREE_MAX_KEY_SIZE.getValueAsInteger();
+
+  private static final int MAX_SEARCH_DEPTH = 64;
+
   private static final Set<String> TYPES;
   private static final Set<String> ALGORITHMS;
 
@@ -66,6 +76,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
     final Set<String> algorithms = new HashSet<>();
     algorithms.add(SBTREE_ALGORITHM);
     algorithms.add(CELL_BTREE_ALGORITHM);
+    algorithms.add(BINARY_TREE_ALGORITHM);
 
     ALGORITHMS = Collections.unmodifiableSet(algorithms);
   }
@@ -73,9 +84,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
   static boolean isMultiValueIndex(final String indexType) {
     switch (OClass.INDEX_TYPE.valueOf(indexType)) {
       case UNIQUE:
-      case UNIQUE_HASH_INDEX:
       case DICTIONARY:
-      case DICTIONARY_HASH_INDEX:
         return false;
     }
 
@@ -113,18 +122,65 @@ public class ODefaultIndexFactory implements OIndexFactory {
       valueContainerAlgorithm = NONE_VALUE_CONTAINER;
     }
 
+    OClass.INDEX_TYPE passedIndexType = OClass.INDEX_TYPE.valueOf(indexType);
+
+    if (algorithm.equals(BINARY_TREE_ALGORITHM)
+        && (passedIndexType == OClass.INDEX_TYPE.DICTIONARY
+            || passedIndexType == OClass.INDEX_TYPE.FULLTEXT)) {
+      algorithm = CELL_BTREE_ALGORITHM;
+    }
+
     if (version < 0) {
       version = getLastVersion(algorithm);
     }
 
-    return createSBTreeIndex(
-        name,
-        indexType,
-        valueContainerAlgorithm,
-        metadata,
-        (OAbstractPaginatedStorage) storage.getUnderlying(),
-        version,
-        algorithm);
+    if (algorithm.equals(CELL_BTREE_ALGORITHM) || algorithm.equals(SBTREE_ALGORITHM)) {
+      return createSBTreeIndex(
+          name,
+          indexType,
+          valueContainerAlgorithm,
+          metadata,
+          (OAbstractPaginatedStorage) storage.getUnderlying(),
+          version,
+          algorithm);
+    }
+
+    return createBinaryTreeIndex(
+        name, indexType, metadata, (OAbstractPaginatedStorage) storage, version, algorithm);
+  }
+
+  private IndexInternal createBinaryTreeIndex(
+      String name,
+      String indexType,
+      ODocument metadata,
+      OAbstractPaginatedStorage storage,
+      int version,
+      String algorithm) {
+    final int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();
+
+    if (OClass.INDEX_TYPE.UNIQUE.toString().equals(indexType)) {
+      return new IndexUniqueBinaryKey(
+          name,
+          indexType,
+          algorithm,
+          SBTREE_BONSAI_VALUE_CONTAINER,
+          metadata,
+          version,
+          storage,
+          binaryFormatVersion);
+    } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
+      return new IndexNotUniqueBinaryKey(
+          name,
+          indexType,
+          algorithm,
+          SBTREE_BONSAI_VALUE_CONTAINER,
+          metadata,
+          version,
+          storage,
+          binaryFormatVersion);
+    }
+
+    throw new OConfigurationException("Unsupported type: " + indexType);
   }
 
   private static IndexInternal createSBTreeIndex(
@@ -139,7 +195,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
     final int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();
 
     if (OClass.INDEX_TYPE.UNIQUE.toString().equals(indexType)) {
-      return new OIndexUnique(
+      return new IndexUniqueOriginalKey(
           name,
           indexType,
           algorithm,
@@ -149,7 +205,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
           metadata,
           binaryFormatVersion);
     } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
-      return new OIndexNotUnique(
+      return new IndexNotUniqueOriginalKey(
           name,
           indexType,
           algorithm,
@@ -195,6 +251,8 @@ public class ODefaultIndexFactory implements OIndexFactory {
         return OSBTreeIndexEngine.VERSION;
       case CELL_BTREE_ALGORITHM:
         return CellBTreeIndexEngine.VERSION;
+      case BINARY_TREE_ALGORITHM:
+        return BinaryTreeIndexEngine.VERSION;
     }
 
     throw new IllegalStateException("Invalid algorithm name " + algorithm);
@@ -209,7 +267,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
       OStorage storage,
       int version,
       int apiVersion,
-      @SuppressWarnings("SpellCheckingInspection") boolean multiValue,
+      boolean multiValue,
       Map<String, String> engineProperties) {
 
     if (algorithm == null) {
@@ -244,6 +302,50 @@ public class ODefaultIndexFactory implements OIndexFactory {
             break;
           default:
             throw new IllegalStateException("Invalid name of algorithm :'" + "'");
+        }
+        break;
+      case BINARY_TREE_ALGORITHM:
+        final Locale locale;
+        final String languageTag = engineProperties.get(BINARY_TREE_LOCALE);
+        if (languageTag == null) {
+          locale = storage.getConfiguration().getLocaleInstance();
+        } else {
+          locale = Locale.forLanguageTag(languageTag);
+        }
+
+        int decomposition = Collator.NO_DECOMPOSITION;
+        final String decompositionTag = engineProperties.get(BINARY_TREE_DECOMPOSITION);
+
+        if (decompositionTag != null) {
+          try {
+            decomposition = Integer.parseInt(decompositionTag);
+          } catch (NumberFormatException e) {
+            // ignore
+          }
+        }
+
+        if (multiValue) {
+          indexEngine =
+              new BinaryTreeMultiValueIndexEngine(
+                  name,
+                  indexId,
+                  (OAbstractPaginatedStorage) storage,
+                  SPLITERATOR_CACHE_SIZE,
+                  MAX_KEY_SIZE,
+                  MAX_SEARCH_DEPTH,
+                  locale,
+                  decomposition);
+        } else {
+          indexEngine =
+              new BinaryTreeSingleValueIndexEngine(
+                  name,
+                  indexId,
+                  (OAbstractPaginatedStorage) storage,
+                  SPLITERATOR_CACHE_SIZE,
+                  MAX_KEY_SIZE,
+                  MAX_SEARCH_DEPTH,
+                  locale,
+                  decomposition);
         }
         break;
       case "remote":

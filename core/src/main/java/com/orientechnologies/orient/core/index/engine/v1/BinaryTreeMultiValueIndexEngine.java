@@ -14,14 +14,14 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.index.nkbtree.binarybtree.BinaryBTree;
 import com.orientechnologies.orient.core.storage.index.nkbtree.normalizers.KeyNormalizers;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public class BinaryTreeMultiValueIndexEngine implements MultiValueBinaryKeyIndexEngine {
+public class BinaryTreeMultiValueIndexEngine
+    implements MultiValueBinaryKeyIndexEngine, BinaryTreeIndexEngine {
   public static final String DATA_FILE_EXTENSION = ".bbt";
 
   private final String name;
@@ -98,7 +98,6 @@ public class BinaryTreeMultiValueIndexEngine implements MultiValueBinaryKeyIndex
 
   @Override
   public void delete(OAtomicOperation atomicOperation) throws IOException {
-    doClearTree(atomicOperation);
     bTree.delete(atomicOperation);
   }
 
@@ -317,11 +316,5 @@ public class BinaryTreeMultiValueIndexEngine implements MultiValueBinaryKeyIndex
       firstKey = new OCompositeKey(rangeFrom);
     }
     return firstKey;
-  }
-
-  @Override
-  public boolean rawRemove(OAtomicOperation atomicOperation, byte[] key, ORID value)
-      throws IOException {
-    return bTree.remove(atomicOperation, key) != null;
   }
 }
