@@ -44,7 +44,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.index.nkbtree.normalizers.KeyNormalizers;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionDataChange;
@@ -548,11 +547,11 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
 
   @Override
   public void addIndexEntry(
-          OIndex index,
-          String indexName,
-          OTransactionIndexChanges.OPERATION type,
-          Object key,
-          OIdentifiable value) {
+      OIndex index,
+      String indexName,
+      OTransactionIndexChanges.OPERATION type,
+      Object key,
+      OIdentifiable value) {
 
     final OTransactionIndexChanges indexOperation;
     if (index instanceof IndexInternalOriginalKey) {
@@ -564,8 +563,7 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
 
       indexOperation =
           indexOperations.computeIfAbsent(
-              indexName,
-              k -> new OTransactionIndexChanges(new CollatorComparator(collator)));
+              indexName, k -> new OTransactionIndexChanges(new CollatorComparator(collator)));
     }
 
     if (type == OTransactionIndexChanges.OPERATION.CLEAR) indexOperation.setCleared();

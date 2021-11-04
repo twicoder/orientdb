@@ -517,23 +517,24 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
 
   @Override
   public void addIndexEntry(
-          OIndex delegate,
-          String iIndexName,
-          OTransactionIndexChanges.OPERATION iOperation,
-          Object key,
-          OIdentifiable iValue) {
+      OIndex delegate,
+      String iIndexName,
+      OTransactionIndexChanges.OPERATION iOperation,
+      Object key,
+      OIdentifiable iValue) {
     super.addIndexEntry(delegate, iIndexName, iOperation, key, iValue);
     changed = true;
   }
 
   @Override
   public void addIndexEntry(
-          ODatabaseDocumentInternal database, OIndex index,
-          String indexName,
-          OTransactionIndexChanges.OPERATION iOperation,
-          Object key,
-          OIdentifiable iValue,
-          boolean clientTrackOnly) {
+      ODatabaseDocumentInternal database,
+      OIndex index,
+      String indexName,
+      OTransactionIndexChanges.OPERATION iOperation,
+      Object key,
+      OIdentifiable iValue,
+      boolean clientTrackOnly) {
     super.addIndexEntry(database, index, indexName, iOperation, key, iValue, clientTrackOnly);
     changed = true;
   }

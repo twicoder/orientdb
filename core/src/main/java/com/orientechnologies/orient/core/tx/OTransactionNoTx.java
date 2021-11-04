@@ -308,11 +308,11 @@ public class OTransactionNoTx extends OTransactionAbstract {
   }
 
   public void addIndexEntry(
-          final OIndex delegate,
-          final String indexName,
-          final OPERATION status,
-          final Object key,
-          final OIdentifiable value) {
+      final OIndex delegate,
+      final String indexName,
+      final OPERATION status,
+      final Object key,
+      final OIdentifiable value) {
     switch (status) {
       case CLEAR:
         delegate.clear();

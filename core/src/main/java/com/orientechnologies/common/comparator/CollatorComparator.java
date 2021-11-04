@@ -2,7 +2,6 @@ package com.orientechnologies.common.comparator;
 
 import com.ibm.icu.text.Collator;
 import com.orientechnologies.orient.core.index.OCompositeKey;
-
 import java.util.Comparator;
 
 public class CollatorComparator implements Comparator<Object> {

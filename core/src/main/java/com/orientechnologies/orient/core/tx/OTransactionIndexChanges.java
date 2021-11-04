@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.IndexInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
-
 import java.util.Comparator;
 import java.util.NavigableMap;
 import java.util.TreeMap;
