@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.index.nkbtree.normalizers.KeyNormalizers;
-
 import java.util.Collection;
 import java.util.Locale;
 import java.util.stream.Stream;
@@ -74,7 +73,8 @@ public interface IndexInternalBinaryKey extends IndexInternal {
 
   KeyNormalizers getKeyNormalizers();
 
-  static ORawPair<Collator, KeyNormalizers> createCollatorNormalizers(OStorage storage, ODocument metadata) {
+  static ORawPair<Collator, KeyNormalizers> createCollatorNormalizers(
+      OStorage storage, ODocument metadata) {
     final Locale locale;
     final String languageTag = metadata.getProperty(ODefaultIndexFactory.BINARY_TREE_LOCALE);
     if (languageTag == null) {
