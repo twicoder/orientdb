@@ -1,8 +1,14 @@
 package com.orientechnologies.orient.core.index;
 
+import com.ibm.icu.text.Collator;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.index.nkbtree.normalizers.KeyNormalizers;
+
 import java.util.Collection;
+import java.util.Locale;
 import java.util.stream.Stream;
 
 public interface IndexInternalBinaryKey extends IndexInternal {
@@ -63,4 +69,37 @@ public interface IndexInternalBinaryKey extends IndexInternal {
    */
   Stream<ORawPair<byte[], ORID>> streamEntriesMinor(
       Object toKey, boolean toInclusive, boolean ascOrder);
+
+  Collator getCollator();
+
+  KeyNormalizers getKeyNormalizers();
+
+  static ORawPair<Collator, KeyNormalizers> createCollatorNormalizers(OStorage storage, ODocument metadata) {
+    final Locale locale;
+    final String languageTag = metadata.getProperty(ODefaultIndexFactory.BINARY_TREE_LOCALE);
+    if (languageTag == null) {
+      locale = storage.getConfiguration().getLocaleInstance();
+    } else {
+      locale = Locale.forLanguageTag(languageTag);
+    }
+
+    int decomposition = Collator.NO_DECOMPOSITION;
+    final String decompositionTag =
+        metadata.getProperty(ODefaultIndexFactory.BINARY_TREE_DECOMPOSITION).toString();
+
+    if (decompositionTag != null) {
+      try {
+        decomposition = Integer.parseInt(decompositionTag);
+      } catch (NumberFormatException e) {
+        // ignore
+      }
+    }
+
+    final Collator collator = Collator.getInstance(locale);
+    collator.setDecomposition(decomposition);
+
+    final KeyNormalizers keyNormalizers = new KeyNormalizers(collator);
+
+    return new ORawPair<>(collator, keyNormalizers);
+  }
 }

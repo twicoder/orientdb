@@ -20,6 +20,9 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import com.ibm.icu.text.Collator;
+import com.orientechnologies.common.comparator.CollatorComparator;
+import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -32,10 +35,7 @@ import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.index.nkbtree.normalizers.KeyNormalizers;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionDataChange;
@@ -55,17 +56,7 @@ import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -557,13 +548,25 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
 
   @Override
   public void addIndexEntry(
-      OIndex index,
-      String indexName,
-      OTransactionIndexChanges.OPERATION type,
-      Object key,
-      OIdentifiable value) {
-    final OTransactionIndexChanges indexOperation =
-        indexOperations.computeIfAbsent(indexName, k -> new OTransactionIndexChanges());
+          OIndex index,
+          String indexName,
+          OTransactionIndexChanges.OPERATION type,
+          Object key,
+          OIdentifiable value) {
+
+    final OTransactionIndexChanges indexOperation;
+    if (index instanceof IndexInternalOriginalKey) {
+      indexOperation =
+          indexOperations.computeIfAbsent(
+              indexName, k -> new OTransactionIndexChanges(ODefaultComparator.INSTANCE));
+    } else {
+      final Collator collator = ((IndexInternalBinaryKey) index.getInternal()).getCollator();
+
+      indexOperation =
+          indexOperations.computeIfAbsent(
+              indexName,
+              k -> new OTransactionIndexChanges(new CollatorComparator(collator)));
+    }
 
     if (type == OTransactionIndexChanges.OPERATION.CLEAR) indexOperation.setCleared();
     else {

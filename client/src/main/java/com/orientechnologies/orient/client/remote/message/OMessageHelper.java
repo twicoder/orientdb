@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.client.remote.message;
 
+import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.ORawPair;
@@ -348,10 +349,10 @@ public class OMessageHelper {
     while (val-- > 0) {
       String indexName = channel.readString();
       boolean cleared = channel.readBoolean();
-      OTransactionIndexChanges entry = new OTransactionIndexChanges();
+      OTransactionIndexChanges entry = new OTransactionIndexChanges(ODefaultComparator.INSTANCE);
       entry.cleared = cleared;
       int changeCount = channel.readInt();
-      NavigableMap<Object, OTransactionIndexChangesPerKey> entries = new TreeMap<>();
+      TreeMap<Object, OTransactionIndexChangesPerKey> entries = new TreeMap<>();
       while (changeCount-- > 0) {
         byte bt = channel.readByte();
         Object key;

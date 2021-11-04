@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.index;
 
+import com.ibm.icu.text.Collator;
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -13,6 +14,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.index.nkbtree.normalizers.KeyNormalizers;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import java.util.*;
 import java.util.stream.Stream;
@@ -45,6 +47,9 @@ public class IndexUniqueBinaryKey extends OIndexAbstract implements IndexInterna
         return newValue.getIdentity();
       };
 
+  private final Collator collator;
+  private final KeyNormalizers keyNormalizers;
+
   public IndexUniqueBinaryKey(
       String name,
       String type,
@@ -63,6 +68,12 @@ public class IndexUniqueBinaryKey extends OIndexAbstract implements IndexInterna
         version,
         storage,
         binaryFormatVersion);
+
+    final ORawPair<Collator, KeyNormalizers> pair =
+        IndexInternalBinaryKey.createCollatorNormalizers(storage, metadata);
+
+    this.collator = pair.first;
+    this.keyNormalizers = pair.second;
   }
 
   @Deprecated
@@ -228,6 +239,16 @@ public class IndexUniqueBinaryKey extends OIndexAbstract implements IndexInterna
     } finally {
       releaseSharedLock();
     }
+  }
+
+  @Override
+  public Collator getCollator() {
+    return collator;
+  }
+
+  @Override
+  public KeyNormalizers getKeyNormalizers() {
+    return keyNormalizers;
   }
 
   public long size() {

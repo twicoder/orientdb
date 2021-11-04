@@ -81,7 +81,7 @@ public class OTransactionOptimisticClient extends OTransactionOptimistic {
     newObjectCounter = createCount;
 
     for (IndexChange change : indexChanges) {
-      NavigableMap<Object, OTransactionIndexChangesPerKey> changesPerKey =
+      TreeMap<Object, OTransactionIndexChangesPerKey> changesPerKey =
           new TreeMap<>(ODefaultComparator.INSTANCE);
       for (Map.Entry<Object, OTransactionIndexChangesPerKey> keyChange :
           change.getKeyChanges().changesPerKey.entrySet()) {

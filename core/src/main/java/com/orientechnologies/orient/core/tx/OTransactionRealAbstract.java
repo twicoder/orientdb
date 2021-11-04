@@ -19,16 +19,16 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import com.ibm.icu.text.Collator;
+import com.orientechnologies.common.comparator.CollatorComparator;
+import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -41,18 +41,8 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTran
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
 
 public abstract class OTransactionRealAbstract extends OTransactionAbstract
     implements OTransactionInternal {
@@ -276,24 +266,35 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
   public void addIndexEntry(
       final OIndex delegate,
       final String iIndexName,
-      final OTransactionIndexChanges.OPERATION iOperation,
+      final OPERATION iOperation,
       final Object key,
       final OIdentifiable iValue) {
-    addIndexEntry(delegate, iIndexName, iOperation, key, iValue, false);
+    addIndexEntry(null, delegate, iIndexName, iOperation, key, iValue, false);
   }
 
   /** Bufferizes index changes to be flushed at commit time. */
   public void addIndexEntry(
-      final OIndex delegate,
-      final String iIndexName,
-      final OTransactionIndexChanges.OPERATION iOperation,
+      final ODatabaseDocumentInternal database,
+      final OIndex index,
+      final String indexName,
+      final OPERATION iOperation,
       final Object key,
       final OIdentifiable iValue,
       boolean clientTrackOnly) {
-    OTransactionIndexChanges indexEntry = indexEntries.get(iIndexName);
-    if (indexEntry == null) {
-      indexEntry = new OTransactionIndexChanges();
-      indexEntries.put(iIndexName, indexEntry);
+    final OTransactionIndexChanges indexEntry;
+    if (index instanceof IndexInternalOriginalKey) {
+      indexEntry =
+          indexEntries.computeIfAbsent(
+              indexName, k -> new OTransactionIndexChanges(ODefaultComparator.INSTANCE));
+    } else {
+      indexEntry =
+          indexEntries.computeIfAbsent(
+              indexName,
+              k -> {
+                final Collator collator =
+                    ((IndexInternalBinaryKey) index.getInternal()).getCollator();
+                return new OTransactionIndexChanges(new CollatorComparator(collator));
+              });
     }
 
     if (iOperation == OPERATION.CLEAR) indexEntry.setCleared();
@@ -313,7 +314,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
       }
 
       transactionIndexOperations.add(
-          new OTransactionRecordIndexOperation(iIndexName, key, iOperation));
+          new OTransactionRecordIndexOperation(indexName, key, iOperation));
     }
   }
 

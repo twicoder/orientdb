@@ -1,51 +1,44 @@
-/*
- *
- *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- *  *
- *  *  Licensed under the Apache License, Version 2.0 (the "License");
- *  *  you may not use this file except in compliance with the License.
- *  *  You may obtain a copy of the License at
- *  *
- *  *       http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  *  Unless required by applicable law or agreed to in writing, software
- *  *  distributed under the License is distributed on an "AS IS" BASIS,
- *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  *  See the License for the specific language governing permissions and
- *  *  limitations under the License.
- *  *
- *  * For more information: http://orientdb.com
- *
- */
 package com.orientechnologies.orient.core.index;
 
+import com.ibm.icu.text.Collator;
 import com.orientechnologies.common.comparator.ODefaultComparator;
-import com.orientechnologies.common.spliterators.Streams;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.storage.index.nkbtree.normalizers.KeyNormalizers;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.Objects;
-import java.util.Spliterator;
+
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-/**
- * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit().
- * All the other operations are delegated to the wrapped OIndex instance.
- */
-public class OIndexTxAwareOneValueOriginalKey extends OIndexTxAware<OIdentifiable>
-    implements IndexInternalOriginalKey {
+public class IndexTxAwareOneValueBinaryKey extends OIndexTxAware<OIdentifiable>
+    implements IndexInternalBinaryKey {
+
+  private final Collator collator;
+  private final KeyNormalizers keyNormalizers;
+  private final OType[] keyTypes;
+
+  public IndexTxAwareOneValueBinaryKey(
+      final ODatabaseDocumentInternal database,
+      final IndexInternal delegate,
+      Collator collator,
+      final KeyNormalizers keyNormalizers,
+      final OType[] keyTypes) {
+    super(database, delegate);
+
+    this.collator = collator;
+
+    this.keyNormalizers = keyNormalizers;
+    this.keyTypes = keyTypes;
+  }
+
   private class PureTxBetweenIndexForwardSpliterator
-      implements Spliterator<ORawPair<Object, ORID>> {
+      implements Spliterator<ORawPair<byte[], ORID>> {
     private final OTransactionIndexChanges indexChanges;
     private Object lastKey;
 
@@ -79,7 +72,7 @@ public class OIndexTxAwareOneValueOriginalKey extends OIndexTxAware<OIdentifiabl
     }
 
     @Override
-    public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
+    public boolean tryAdvance(Consumer<? super ORawPair<byte[], ORID>> action) {
       if (nextKey == null) {
         return false;
       }
@@ -100,12 +93,14 @@ public class OIndexTxAwareOneValueOriginalKey extends OIndexTxAware<OIdentifiabl
         return false;
       }
 
-      action.accept(result);
+      final byte[] normalizedKey = normalizeKey(result.first);
+      action.accept(new ORawPair<>(normalizedKey, result.second));
+
       return true;
     }
 
     @Override
-    public Spliterator<ORawPair<Object, ORID>> trySplit() {
+    public Spliterator<ORawPair<byte[], ORID>> trySplit() {
       return null;
     }
 
@@ -120,14 +115,14 @@ public class OIndexTxAwareOneValueOriginalKey extends OIndexTxAware<OIdentifiabl
     }
 
     @Override
-    public Comparator<? super ORawPair<Object, ORID>> getComparator() {
+    public Comparator<? super ORawPair<byte[], ORID>> getComparator() {
       return (entryOne, entryTwo) ->
           ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
     }
   }
 
   private class PureTxBetweenIndexBackwardSpliterator
-      implements Spliterator<ORawPair<Object, ORID>> {
+      implements Spliterator<ORawPair<byte[], ORID>> {
     private final OTransactionIndexChanges indexChanges;
     private Object firstKey;
 
@@ -159,7 +154,7 @@ public class OIndexTxAwareOneValueOriginalKey extends OIndexTxAware<OIdentifiabl
     }
 
     @Override
-    public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
+    public boolean tryAdvance(Consumer<? super ORawPair<byte[], ORID>> action) {
       if (nextKey == null) {
         return false;
       }
@@ -177,12 +172,14 @@ public class OIndexTxAwareOneValueOriginalKey extends OIndexTxAware<OIdentifiabl
         return false;
       }
 
-      action.accept(result);
+      final byte[] normalizedKey = normalizeKey(result.first);
+
+      action.accept(new ORawPair<>(normalizedKey, result.second));
       return true;
     }
 
     @Override
-    public Spliterator<ORawPair<Object, ORID>> trySplit() {
+    public Spliterator<ORawPair<byte[], ORID>> trySplit() {
       return null;
     }
 
@@ -197,15 +194,38 @@ public class OIndexTxAwareOneValueOriginalKey extends OIndexTxAware<OIdentifiabl
     }
 
     @Override
-    public Comparator<? super ORawPair<Object, ORID>> getComparator() {
+    public Comparator<? super ORawPair<byte[], ORID>> getComparator() {
       return (entryOne, entryTwo) ->
           -ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
     }
   }
 
-  public OIndexTxAwareOneValueOriginalKey(
-      final ODatabaseDocumentInternal database, final IndexInternal delegate) {
-    super(database, delegate);
+  private ORawPair<Object, ORID> calculateTxIndexEntry(
+      Object key, final ORID backendValue, final OTransactionIndexChanges indexChanges) {
+    key = getCollatingValue(key);
+    ORID result = backendValue;
+    final OTransactionIndexChangesPerKey changesPerKey = indexChanges.getChangesPerKey(key);
+    if (changesPerKey.isEmpty()) {
+      if (backendValue == null) {
+        return null;
+      } else {
+        return new ORawPair<>(key, backendValue);
+      }
+    }
+
+    for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry :
+        changesPerKey.getEntriesAsList()) {
+      if (entry.getOperation() == OTransactionIndexChanges.OPERATION.REMOVE) {
+        result = null;
+      } else if (entry.getOperation() == OTransactionIndexChanges.OPERATION.PUT)
+        result = entry.getValue().getIdentity();
+    }
+
+    if (result == null) {
+      return null;
+    }
+
+    return new ORawPair<>(key, result);
   }
 
   @Deprecated
@@ -250,66 +270,66 @@ public class OIndexTxAwareOneValueOriginalKey extends OIndexTxAware<OIdentifiabl
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> stream() {
-    final IndexInternalOriginalKey indexInternalOriginalKeyDelegate =
-        (IndexInternalOriginalKey) delegate;
+  public Stream<ORawPair<byte[], ORID>> stream() {
+    final IndexInternalBinaryKey indexInternalOriginalKeyDelegate =
+        (IndexInternalBinaryKey) delegate;
     final OTransactionIndexChanges indexChanges =
         database.getMicroOrRegularTransaction().getIndexChangesInternal(delegate.getName());
     if (indexChanges == null) {
       return indexInternalOriginalKeyDelegate.stream();
     }
 
-    final Stream<ORawPair<Object, ORID>> txStream =
+    final Stream<ORawPair<byte[], ORID>> txStream =
         StreamSupport.stream(
             new PureTxBetweenIndexForwardSpliterator(null, true, null, true, indexChanges), false);
     if (indexChanges.cleared) {
-      return IndexStreamSecurityDecorator.decorateStream(this, txStream);
+      return IndexStreamSecurityDecorator.decorateBinaryStream(this, txStream);
     }
 
     @SuppressWarnings("resource")
-    final Stream<ORawPair<Object, ORID>> backedStream = indexInternalOriginalKeyDelegate.stream();
-    return IndexStreamSecurityDecorator.decorateStream(
+    final Stream<ORawPair<byte[], ORID>> backedStream = indexInternalOriginalKeyDelegate.stream();
+    return IndexStreamSecurityDecorator.decorateBinaryStream(
         this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, true));
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> descStream() {
-    final IndexInternalOriginalKey indexInternalOriginalKeyDelegate =
-        (IndexInternalOriginalKey) delegate;
+  public Stream<ORawPair<byte[], ORID>> descStream() {
+    final IndexInternalBinaryKey indexInternalOriginalKeyDelegate =
+        (IndexInternalBinaryKey) delegate;
     final OTransactionIndexChanges indexChanges =
         database.getMicroOrRegularTransaction().getIndexChangesInternal(delegate.getName());
     if (indexChanges == null) {
       return indexInternalOriginalKeyDelegate.descStream();
     }
 
-    final Stream<ORawPair<Object, ORID>> txStream =
+    final Stream<ORawPair<byte[], ORID>> txStream =
         StreamSupport.stream(
             new PureTxBetweenIndexBackwardSpliterator(null, true, null, true, indexChanges), false);
     if (indexChanges.cleared) {
-      return IndexStreamSecurityDecorator.decorateStream(this, txStream);
+      return IndexStreamSecurityDecorator.decorateBinaryStream(this, txStream);
     }
 
     @SuppressWarnings("resource")
-    final Stream<ORawPair<Object, ORID>> backedStream =
+    final Stream<ORawPair<byte[], ORID>> backedStream =
         indexInternalOriginalKeyDelegate.descStream();
-    return IndexStreamSecurityDecorator.decorateStream(
+    return IndexStreamSecurityDecorator.decorateBinaryStream(
         this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, false));
   }
 
   @Override
-  public Stream<Object> keyStream() {
+  public Stream<byte[]> keyStream() {
     return stream().map(pair -> pair.first);
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> streamEntriesBetween(
+  public Stream<ORawPair<byte[], ORID>> streamEntriesBetween(
       Object fromKey,
       final boolean fromInclusive,
       Object toKey,
       final boolean toInclusive,
       final boolean ascOrder) {
-    final IndexInternalOriginalKey indexInternalOriginalKeyDelegate =
-        (IndexInternalOriginalKey) delegate;
+    final IndexInternalBinaryKey indexInternalOriginalKeyDelegate =
+        (IndexInternalBinaryKey) delegate;
     final OTransactionIndexChanges indexChanges =
         database.getMicroOrRegularTransaction().getIndexChangesInternal(delegate.getName());
     if (indexChanges == null) {
@@ -320,7 +340,7 @@ public class OIndexTxAwareOneValueOriginalKey extends OIndexTxAware<OIdentifiabl
     fromKey = getCollatingValue(fromKey);
     toKey = getCollatingValue(toKey);
 
-    final Stream<ORawPair<Object, ORID>> txStream;
+    final Stream<ORawPair<byte[], ORID>> txStream;
     if (ascOrder) {
       //noinspection resource
       txStream =
@@ -338,45 +358,23 @@ public class OIndexTxAwareOneValueOriginalKey extends OIndexTxAware<OIdentifiabl
     }
 
     if (indexChanges.cleared) {
-      return IndexStreamSecurityDecorator.decorateStream(this, txStream);
+      return IndexStreamSecurityDecorator.decorateBinaryStream(this, txStream);
     }
 
     @SuppressWarnings("resource")
-    final Stream<ORawPair<Object, ORID>> backedStream =
+    final Stream<ORawPair<byte[], ORID>> backedStream =
         indexInternalOriginalKeyDelegate.streamEntriesBetween(
             fromKey, fromInclusive, toKey, toInclusive, ascOrder);
 
-    return IndexStreamSecurityDecorator.decorateStream(
+    return IndexStreamSecurityDecorator.decorateBinaryStream(
         this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, ascOrder));
   }
 
-  private Stream<ORawPair<Object, ORID>> mergeTxAndBackedStreams(
-      OTransactionIndexChanges indexChanges,
-      Stream<ORawPair<Object, ORID>> txStream,
-      Stream<ORawPair<Object, ORID>> backedStream,
-      boolean ascSortOrder) {
-    return Streams.mergeSortedSpliterators(
-        txStream,
-        backedStream
-            .map(
-                (entry) ->
-                    calculateTxIndexEntry(
-                        getCollatingValue(entry.first), entry.second, indexChanges))
-            .filter(Objects::nonNull),
-        (entryOne, entryTwo) -> {
-          if (ascSortOrder) {
-            return ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
-          } else {
-            return -ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
-          }
-        });
-  }
-
   @Override
-  public Stream<ORawPair<Object, ORID>> streamEntriesMajor(
+  public Stream<ORawPair<byte[], ORID>> streamEntriesMajor(
       Object fromKey, boolean fromInclusive, boolean ascOrder) {
-    final IndexInternalOriginalKey indexInternalOriginalKeyDelegate =
-        (IndexInternalOriginalKey) delegate;
+    final IndexInternalBinaryKey indexInternalOriginalKeyDelegate =
+        (IndexInternalBinaryKey) delegate;
     final OTransactionIndexChanges indexChanges =
         database.getMicroOrRegularTransaction().getIndexChangesInternal(delegate.getName());
     if (indexChanges == null) {
@@ -385,7 +383,7 @@ public class OIndexTxAwareOneValueOriginalKey extends OIndexTxAware<OIdentifiabl
 
     fromKey = getCollatingValue(fromKey);
 
-    final Stream<ORawPair<Object, ORID>> txStream;
+    final Stream<ORawPair<byte[], ORID>> txStream;
 
     final Object lastKey = indexChanges.getLastKey();
     if (ascOrder) {
@@ -405,21 +403,21 @@ public class OIndexTxAwareOneValueOriginalKey extends OIndexTxAware<OIdentifiabl
     }
 
     if (indexChanges.cleared) {
-      return IndexStreamSecurityDecorator.decorateStream(this, txStream);
+      return IndexStreamSecurityDecorator.decorateBinaryStream(this, txStream);
     }
 
     @SuppressWarnings("resource")
-    final Stream<ORawPair<Object, ORID>> backedStream =
+    final Stream<ORawPair<byte[], ORID>> backedStream =
         indexInternalOriginalKeyDelegate.streamEntriesMajor(fromKey, fromInclusive, ascOrder);
-    return IndexStreamSecurityDecorator.decorateStream(
+    return IndexStreamSecurityDecorator.decorateBinaryStream(
         this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, ascOrder));
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> streamEntriesMinor(
+  public Stream<ORawPair<byte[], ORID>> streamEntriesMinor(
       Object toKey, boolean toInclusive, boolean ascOrder) {
-    final IndexInternalOriginalKey indexInternalOriginalKeyDelegate =
-        (IndexInternalOriginalKey) delegate;
+    final IndexInternalBinaryKey indexInternalOriginalKeyDelegate =
+        (IndexInternalBinaryKey) delegate;
     final OTransactionIndexChanges indexChanges =
         database.getMicroOrRegularTransaction().getIndexChangesInternal(delegate.getName());
     if (indexChanges == null) {
@@ -428,7 +426,7 @@ public class OIndexTxAwareOneValueOriginalKey extends OIndexTxAware<OIdentifiabl
 
     toKey = getCollatingValue(toKey);
 
-    final Stream<ORawPair<Object, ORID>> txStream;
+    final Stream<ORawPair<byte[], ORID>> txStream;
 
     final Object firstKey = indexChanges.getFirstKey();
     if (ascOrder) {
@@ -448,20 +446,30 @@ public class OIndexTxAwareOneValueOriginalKey extends OIndexTxAware<OIdentifiabl
     }
 
     if (indexChanges.cleared) {
-      return IndexStreamSecurityDecorator.decorateStream(this, txStream);
+      return IndexStreamSecurityDecorator.decorateBinaryStream(this, txStream);
     }
 
     @SuppressWarnings("resource")
-    final Stream<ORawPair<Object, ORID>> backedStream =
+    final Stream<ORawPair<byte[], ORID>> backedStream =
         indexInternalOriginalKeyDelegate.streamEntriesMinor(toKey, toInclusive, ascOrder);
-    return IndexStreamSecurityDecorator.decorateStream(
+    return IndexStreamSecurityDecorator.decorateBinaryStream(
         this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, ascOrder));
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> streamEntries(Collection<?> keys, boolean ascSortOrder) {
-    final IndexInternalOriginalKey indexInternalOriginalKeyDelegate =
-        (IndexInternalOriginalKey) delegate;
+  public Collator getCollator() {
+    return collator;
+  }
+
+  @Override
+  public KeyNormalizers getKeyNormalizers() {
+    return keyNormalizers;
+  }
+
+  @Override
+  public Stream<ORawPair<byte[], ORID>> streamEntries(Collection<?> keys, boolean ascSortOrder) {
+    final IndexInternalBinaryKey indexInternalOriginalKeyDelegate =
+        (IndexInternalBinaryKey) delegate;
     final OTransactionIndexChanges indexChanges =
         database.getMicroOrRegularTransaction().getIndexChangesInternal(delegate.getName());
     if (indexChanges == null) {
@@ -469,10 +477,11 @@ public class OIndexTxAwareOneValueOriginalKey extends OIndexTxAware<OIdentifiabl
     }
 
     @SuppressWarnings("resource")
-    final Stream<ORawPair<Object, ORID>> txStream =
+    final Stream<ORawPair<byte[], ORID>> txStream =
         keys.stream()
             .map((key) -> calculateTxIndexEntry(getCollatingValue(key), null, indexChanges))
             .filter(Objects::nonNull)
+            .map(pair -> new ORawPair<>(normalizeKey(pair.first), pair.second))
             .sorted(
                 (entryOne, entryTwo) -> {
                   if (ascSortOrder) {
@@ -483,38 +492,49 @@ public class OIndexTxAwareOneValueOriginalKey extends OIndexTxAware<OIdentifiabl
                 });
 
     if (indexChanges.cleared) {
-      return IndexStreamSecurityDecorator.decorateStream(this, txStream);
+      return IndexStreamSecurityDecorator.decorateBinaryStream(this, txStream);
     }
 
     @SuppressWarnings("resource")
-    final Stream<ORawPair<Object, ORID>> backedStream =
+    final Stream<ORawPair<byte[], ORID>> backedStream =
         indexInternalOriginalKeyDelegate.streamEntries(keys, ascSortOrder);
-    return IndexStreamSecurityDecorator.decorateStream(
+    return IndexStreamSecurityDecorator.decorateBinaryStream(
         this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, ascSortOrder));
   }
 
-  private ORawPair<Object, ORID> calculateTxIndexEntry(
-      Object key, final ORID backendValue, final OTransactionIndexChanges indexChanges) {
-    key = getCollatingValue(key);
-    ORID result = backendValue;
-    final OTransactionIndexChangesPerKey changesPerKey = indexChanges.getChangesPerKey(key);
-    if (changesPerKey.isEmpty()) {
-      if (backendValue == null) {
-        return null;
-      } else {
-        return new ORawPair<>(key, backendValue);
-      }
+  private Stream<ORawPair<byte[], ORID>> mergeTxAndBackedStreams(
+      OTransactionIndexChanges indexChanges,
+      Stream<ORawPair<byte[], ORID>> txStream,
+      Stream<ORawPair<byte[], ORID>> backedStream,
+      boolean ascSortOrder) {
+    return com.orientechnologies.common.spliterators.Streams.mergeSortedSpliterators(
+        txStream,
+        backedStream
+            .map(
+                (entry) ->
+                    calculateTxIndexEntry(
+                        getCollatingValue(entry.first), entry.second, indexChanges))
+            .filter(Objects::nonNull)
+            .map(pair -> new ORawPair<>(normalizeKey(pair.first), pair.second)),
+        (entryOne, entryTwo) -> {
+          if (ascSortOrder) {
+            return ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
+          } else {
+            return -ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
+          }
+        });
+  }
+
+  private byte[] normalizeKey(final Object key) {
+    if (key instanceof OCompositeKey) {
+      final OCompositeKey compositeKey = (OCompositeKey) key;
+
+      assert keyTypes.length == compositeKey.getKeys().size();
+
+      return keyNormalizers.normalize((OCompositeKey) key, keyTypes);
     }
 
-    for (OTransactionIndexEntry entry : changesPerKey.getEntriesAsList()) {
-      if (entry.getOperation() == OPERATION.REMOVE) result = null;
-      else if (entry.getOperation() == OPERATION.PUT) result = entry.getValue().getIdentity();
-    }
-
-    if (result == null) {
-      return null;
-    }
-
-    return new ORawPair<>(key, result);
+    assert keyTypes.length == 1;
+    return keyNormalizers.normalize(key, keyTypes[0]);
   }
 }

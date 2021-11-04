@@ -791,9 +791,18 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     if (indexInternal instanceof IndexMultiValuesOriginalKey) {
       return new OIndexTxAwareMultiValueOriginal(database, indexInternal);
     } else if (indexInternal instanceof OIndexDictionary) {
-      return new OIndexTxAwareDictionary(database, indexInternal);
+      return new IndexTxAwareDictionary(database, indexInternal);
     } else if (indexInternal instanceof IndexOneValueOriginalKey) {
-      return new OIndexTxAwareOneValueOriginalKey(database, indexInternal);
+      return new IndexTxAwareOneValueOriginalKey(database, indexInternal);
+    } else if (indexInternal instanceof IndexUniqueBinaryKey) {
+      final IndexUniqueBinaryKey indexUniqueBinaryKey = (IndexUniqueBinaryKey) indexInternal;
+
+      return new IndexTxAwareOneValueBinaryKey(
+          database,
+          indexInternal,
+          indexUniqueBinaryKey.getCollator(),
+          indexUniqueBinaryKey.getKeyNormalizers(),
+          index.getKeyTypes());
     }
 
     return index;

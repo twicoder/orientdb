@@ -625,14 +625,14 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
   @Override
   public void addIndexEntry(
-      OIndex delegate,
-      String iIndexName,
-      OTransactionIndexChanges.OPERATION iOperation,
-      Object key,
-      OIdentifiable iValue,
-      boolean clientTrackOnly) {
+          ODatabaseDocumentInternal database, OIndex index,
+          String indexName,
+          OTransactionIndexChanges.OPERATION iOperation,
+          Object key,
+          OIdentifiable iValue,
+          boolean clientTrackOnly) {
     changed = true;
-    super.addIndexEntry(delegate, iIndexName, iOperation, key, iValue, clientTrackOnly);
+    super.addIndexEntry(database, index, indexName, iOperation, key, iValue, clientTrackOnly);
   }
 
   public void resetChangesTracking() {
@@ -768,7 +768,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     for (OClassIndexManager.IndexChange indexChange : changes) {
       addIndexEntry(
-          indexChange.index,
+              indexChange.index,
           indexChange.index.getName(),
           indexChange.operation,
           indexChange.key,

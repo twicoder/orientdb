@@ -46,7 +46,7 @@ public class ORemoteTransactionMessagesTest {
     List<ORecordOperation> operations = new ArrayList<>();
     operations.add(new ORecordOperation(new ODocument(), ORecordOperation.CREATED));
     Map<String, OTransactionIndexChanges> changes = new HashMap<>();
-    OTransactionIndexChanges change = new OTransactionIndexChanges();
+    OTransactionIndexChanges change = new OTransactionIndexChanges(ODefaultComparator.INSTANCE);
     change.cleared = false;
     change.changesPerKey = new TreeMap<>(ODefaultComparator.INSTANCE);
     OTransactionIndexChangesPerKey keyChange = new OTransactionIndexChangesPerKey("key");
@@ -86,7 +86,7 @@ public class ORemoteTransactionMessagesTest {
     List<ORecordOperation> operations = new ArrayList<>();
     operations.add(new ORecordOperation(new ODocument(), ORecordOperation.CREATED));
     Map<String, OTransactionIndexChanges> changes = new HashMap<>();
-    OTransactionIndexChanges change = new OTransactionIndexChanges();
+    OTransactionIndexChanges change = new OTransactionIndexChanges(ODefaultComparator.INSTANCE);
     change.cleared = false;
     change.changesPerKey = new TreeMap<>(ODefaultComparator.INSTANCE);
     OTransactionIndexChangesPerKey keyChange = new OTransactionIndexChangesPerKey("key");
@@ -203,7 +203,7 @@ public class ORemoteTransactionMessagesTest {
     operations.add(
         new ORecordOperation(new ODocument(new ORecordId(10, 1)), ORecordOperation.DELETED));
     Map<String, OTransactionIndexChanges> changes = new HashMap<>();
-    OTransactionIndexChanges change = new OTransactionIndexChanges();
+    OTransactionIndexChanges change = new OTransactionIndexChanges(ODefaultComparator.INSTANCE);
     change.cleared = false;
     change.changesPerKey = new TreeMap<>(ODefaultComparator.INSTANCE);
     OTransactionIndexChangesPerKey keyChange = new OTransactionIndexChangesPerKey("key");
@@ -255,7 +255,7 @@ public class ORemoteTransactionMessagesTest {
     operations.add(
         new ORecordOperation(new ODocument(new ORecordId(10, 1)), ORecordOperation.DELETED));
     Map<String, OTransactionIndexChanges> changes = new HashMap<>();
-    OTransactionIndexChanges change = new OTransactionIndexChanges();
+    OTransactionIndexChanges change = new OTransactionIndexChanges(ODefaultComparator.INSTANCE);
     change.cleared = false;
     change.changesPerKey = new TreeMap<>(ODefaultComparator.INSTANCE);
     OTransactionIndexChangesPerKey keyChange = new OTransactionIndexChangesPerKey("key");
@@ -301,7 +301,7 @@ public class ORemoteTransactionMessagesTest {
 
     List<ORecordOperation> operations = new ArrayList<>();
     Map<String, OTransactionIndexChanges> changes = new HashMap<>();
-    OTransactionIndexChanges change = new OTransactionIndexChanges();
+    OTransactionIndexChanges change = new OTransactionIndexChanges(ODefaultComparator.INSTANCE);
     change.cleared = true;
     change.changesPerKey = new TreeMap<>(ODefaultComparator.INSTANCE);
     OTransactionIndexChangesPerKey keyChange = new OTransactionIndexChangesPerKey("key");

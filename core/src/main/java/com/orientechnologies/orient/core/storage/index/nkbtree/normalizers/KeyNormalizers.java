@@ -9,14 +9,11 @@ import com.orientechnologies.orient.core.storage.index.nkbtree.binarybtree.Binar
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
-import java.util.Locale;
 
 public class KeyNormalizers {
-  private final EnumMap<OType, KeyNormalizer> normalizers = new EnumMap<>(OType.class);
+  private static final EnumMap<OType, KeyNormalizer> normalizers = new EnumMap<>(OType.class);
 
-  private final Collator collator;
-
-  public KeyNormalizers(final Locale locale, final int decomposition) {
+  static {
     normalizers.put(OType.INTEGER, new IntegerKeyNormalizer());
     normalizers.put(OType.FLOAT, new FloatKeyNormalizer());
     normalizers.put(OType.DOUBLE, new DoubleKeyNormalizer());
@@ -27,9 +24,12 @@ public class KeyNormalizers {
     normalizers.put(OType.DATE, new DateKeyNormalizer());
     normalizers.put(OType.DATETIME, new DateTimeKeyNormalizer());
     normalizers.put(OType.BINARY, new BinaryKeyNormalizer());
+  }
 
-    this.collator = Collator.getInstance(locale);
-    this.collator.setDecomposition(decomposition);
+  private final Collator collator;
+
+  public KeyNormalizers(Collator collator) {
+    this.collator = collator;
   }
 
   public byte[] normalize(final OCompositeKey key, final OType[] keyTypes) {

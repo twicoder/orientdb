@@ -46,7 +46,10 @@ public class KeyNormalizerVsSerializerBenchmark {
 
   @Setup(Level.Iteration)
   public void setup() {
-    keyNormalizers = new KeyNormalizers(Locale.ENGLISH, Collator.NO_DECOMPOSITION);
+    final Collator collator = Collator.getInstance(Locale.ENGLISH);
+    collator.setDecomposition(Collator.NO_DECOMPOSITION);
+
+    keyNormalizers = new KeyNormalizers(collator);
 
     final LocalDateTime ldt = LocalDateTime.of(2013, 11, 5, 3, 3, 3);
     dateTime = Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant());

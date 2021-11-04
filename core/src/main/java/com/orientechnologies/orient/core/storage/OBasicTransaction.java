@@ -95,11 +95,11 @@ public interface OBasicTransaction {
    * @param value the index key value.
    */
   void addIndexEntry(
-      OIndex index,
-      String indexName,
-      OTransactionIndexChanges.OPERATION operation,
-      Object key,
-      OIdentifiable value);
+          OIndex index,
+          String indexName,
+          OTransactionIndexChanges.OPERATION operation,
+          Object key,
+          OIdentifiable value);
 
   /**
    * Adds the given document to a set of changed documents known to this transaction.

@@ -56,7 +56,10 @@ public class KeyNormalizerBenchmark {
   }
 
   private void binaryFixture() {
-    keyNormalizer = new KeyNormalizers(Locale.getDefault(), Collator.NO_DECOMPOSITION);
+    final Collator collator = Collator.getInstance(Locale.ENGLISH);
+    collator.setDecomposition(Collator.NO_DECOMPOSITION);
+
+    keyNormalizer = new KeyNormalizers(collator);
     final byte[] binaryKey = new byte[] {1, 2, 3, 4, 5, 6};
     binaryCompositeKey = new OCompositeKey();
     binaryCompositeKey.addKey(binaryKey);

@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.index;
 
+import com.ibm.icu.text.Collator;
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -12,12 +13,16 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OMixedI
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.index.nkbtree.normalizers.KeyNormalizers;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class IndexNotUniqueBinaryKey extends OIndexAbstract implements IndexInternalBinaryKey {
+  private final Collator collator;
+  private final KeyNormalizers keyNormalizers;
+
   public IndexNotUniqueBinaryKey(
       String name,
       String type,
@@ -36,6 +41,12 @@ public class IndexNotUniqueBinaryKey extends OIndexAbstract implements IndexInte
         version,
         storage,
         binaryFormatVersion);
+
+    final ORawPair<Collator, KeyNormalizers> pair =
+        IndexInternalBinaryKey.createCollatorNormalizers(storage, metadata);
+
+    collator = pair.first;
+    keyNormalizers = pair.second;
   }
 
   @Deprecated
@@ -222,6 +233,16 @@ public class IndexNotUniqueBinaryKey extends OIndexAbstract implements IndexInte
     } finally {
       releaseSharedLock();
     }
+  }
+
+  @Override
+  public Collator getCollator() {
+    return collator;
+  }
+
+  @Override
+  public KeyNormalizers getKeyNormalizers() {
+    return keyNormalizers;
   }
 
   @Override

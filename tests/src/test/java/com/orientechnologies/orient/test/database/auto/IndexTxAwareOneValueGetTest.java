@@ -2,7 +2,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexTxAwareOneValueOriginalKey;
+import com.orientechnologies.orient.core.index.IndexTxAwareOneValueOriginalKey;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -53,7 +53,7 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
 
     database.begin();
     final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX);
-    Assert.assertTrue(index instanceof OIndexTxAwareOneValueOriginalKey);
+    Assert.assertTrue(index instanceof IndexTxAwareOneValueOriginalKey);
 
     new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1).save();
     new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2).save();
@@ -99,7 +99,7 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
 
     database.begin();
     final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX);
-    Assert.assertTrue(index instanceof OIndexTxAwareOneValueOriginalKey);
+    Assert.assertTrue(index instanceof IndexTxAwareOneValueOriginalKey);
 
     ODocument document = new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1).save();
     new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2).save();
@@ -145,7 +145,7 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
 
     database.begin();
     final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX);
-    Assert.assertTrue(index instanceof OIndexTxAwareOneValueOriginalKey);
+    Assert.assertTrue(index instanceof IndexTxAwareOneValueOriginalKey);
 
     ODocument document = new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1).save();
     new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2).save();
@@ -188,7 +188,7 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
     database.begin();
 
     final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX);
-    Assert.assertTrue(index instanceof OIndexTxAwareOneValueOriginalKey);
+    Assert.assertTrue(index instanceof IndexTxAwareOneValueOriginalKey);
 
     ODocument document = new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1).save();
     document.field(PROPERTY_NAME, 0);
@@ -215,7 +215,7 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
     database.begin();
 
     final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX);
-    Assert.assertTrue(index instanceof OIndexTxAwareOneValueOriginalKey);
+    Assert.assertTrue(index instanceof IndexTxAwareOneValueOriginalKey);
 
     new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1).save();
 
@@ -241,7 +241,7 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
     database.begin();
 
     final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX);
-    Assert.assertTrue(index instanceof OIndexTxAwareOneValueOriginalKey);
+    Assert.assertTrue(index instanceof IndexTxAwareOneValueOriginalKey);
 
     ODocument document = new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1).save();
     document.delete();
@@ -267,7 +267,7 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
     database.begin();
 
     final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX);
-    Assert.assertTrue(index instanceof OIndexTxAwareOneValueOriginalKey);
+    Assert.assertTrue(index instanceof IndexTxAwareOneValueOriginalKey);
 
     ODocument document = new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1).save();
 

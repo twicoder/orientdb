@@ -29,12 +29,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * Container for the list of heterogeneous values that are going to be stored in in index as
@@ -135,6 +130,39 @@ public class OCompositeKey
       }
 
       final int result = ODefaultComparator.INSTANCE.compare(inKey, outKey);
+      if (result != 0) {
+        return result;
+      }
+    }
+
+    return 0;
+  }
+
+  public int compare(Comparator<Object> comparator, final OCompositeKey otherKey) {
+    final Iterator<Object> inIter = keys.iterator();
+    final Iterator<Object> outIter = otherKey.keys.iterator();
+
+    while (inIter.hasNext() && outIter.hasNext()) {
+      final Object inKey = inIter.next();
+      final Object outKey = outIter.next();
+
+      if (outKey instanceof OAlwaysGreaterKey) {
+        return -1;
+      }
+
+      if (outKey instanceof OAlwaysLessKey) {
+        return 1;
+      }
+
+      if (inKey instanceof OAlwaysGreaterKey) {
+        return 1;
+      }
+
+      if (inKey instanceof OAlwaysLessKey) {
+        return -1;
+      }
+
+      final int result = comparator.compare(inKey, outKey);
       if (result != 0) {
         return result;
       }

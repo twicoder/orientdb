@@ -47,7 +47,10 @@ public class ComparatorBenchmark {
 
   @Setup(Level.Iteration)
   public void setup() {
-    keyNormalizer = new KeyNormalizers(Locale.getDefault(), Collator.NO_DECOMPOSITION);
+    final Collator collator = Collator.getInstance(Locale.ENGLISH);
+    collator.setDecomposition(Collator.NO_DECOMPOSITION);
+
+    keyNormalizer = new KeyNormalizers(collator);
 
     try {
       negative = getNormalizedKeySingle(-62);

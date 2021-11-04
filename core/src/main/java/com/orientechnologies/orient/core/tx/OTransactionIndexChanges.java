@@ -19,35 +19,34 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.IndexInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
+
+import java.util.Comparator;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
-/**
- * Collects the changes to an index for a certain key
- *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- */
+/** Collects the changes to an index for a certain key */
 public class OTransactionIndexChanges {
-
   public enum OPERATION {
     PUT,
     REMOVE,
     CLEAR
   }
 
-  public NavigableMap<Object, OTransactionIndexChangesPerKey> changesPerKey =
-      new TreeMap<Object, OTransactionIndexChangesPerKey>(ODefaultComparator.INSTANCE);
+  public TreeMap<Object, OTransactionIndexChangesPerKey> changesPerKey;
 
   public OTransactionIndexChangesPerKey nullKeyChanges = new OTransactionIndexChangesPerKey(null);
 
   public boolean cleared = false;
 
   private IndexInternal resolvedIndex = null;
+
+  public OTransactionIndexChanges(final Comparator<Object> keyComparator) {
+    this.changesPerKey = new TreeMap<>(keyComparator);
+  }
 
   public OTransactionIndexChangesPerKey getChangesPerKey(final Object key) {
     if (key == null) return nullKeyChanges;

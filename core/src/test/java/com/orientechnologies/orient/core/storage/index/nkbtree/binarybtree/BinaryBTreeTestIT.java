@@ -34,7 +34,10 @@ public class BinaryBTreeTestIT {
 
   @BeforeClass
   public static void beforeClass() {
-    keyNormalizers = new KeyNormalizers(Locale.ENGLISH, Collator.NO_DECOMPOSITION);
+    final Collator collator = Collator.getInstance(Locale.ENGLISH);
+    collator.setDecomposition(Collator.NO_DECOMPOSITION);
+
+    keyNormalizers = new KeyNormalizers(collator);
     types = new OType[] {OType.STRING};
   }
 

@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.index.engine.v1;
 
+import com.ibm.icu.text.Collator;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.encryption.OEncryption;
@@ -49,7 +50,10 @@ public class BinaryTreeMultiValueIndexEngine
         new BinaryBTree(
             spliteratorCacheSize, maxKeySize, maxSearchDepth, storage, name, DATA_FILE_EXTENSION);
 
-    this.keyNormalizers = new KeyNormalizers(locale, decomposition);
+    final Collator collator = Collator.getInstance(locale);
+    collator.setDecomposition(decomposition);
+
+    this.keyNormalizers = new KeyNormalizers(collator);
   }
 
   @Override

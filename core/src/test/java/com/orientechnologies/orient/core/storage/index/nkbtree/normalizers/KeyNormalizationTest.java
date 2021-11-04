@@ -21,7 +21,10 @@ public class KeyNormalizationTest {
 
   @Before
   public void setup() {
-    keyNormalizer = new KeyNormalizers(Locale.ENGLISH, Collator.NO_DECOMPOSITION);
+    final Collator collator = Collator.getInstance(Locale.ENGLISH);
+    collator.setDecomposition(Collator.NO_DECOMPOSITION);
+
+    keyNormalizer = new KeyNormalizers(collator);
   }
 
   @Test(expected = IllegalArgumentException.class)

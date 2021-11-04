@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.index.IndexInternal;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexTxAwareMultiValueOriginal;
-import com.orientechnologies.orient.core.index.OIndexTxAwareOneValueOriginalKey;
+import com.orientechnologies.orient.core.index.IndexTxAwareOneValueOriginalKey;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -209,7 +209,7 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
 
     if (!db.getStorage().isRemote()) {
       this.recordKeyValueIndex =
-          new OIndexTxAwareOneValueOriginalKey(db, this.recordKeyValueIndex.getInternal());
+          new IndexTxAwareOneValueOriginalKey(db, this.recordKeyValueIndex.getInternal());
     }
 
     final String className;
@@ -277,7 +277,7 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
           database.getMetadata().getIndexManagerInternal().getIndex(database, recordKeyValueMap);
       final IndexInternal indexInternal = index.getInternal();
       if (indexInternal != null) {
-        recordKeyValueIndex = new OIndexTxAwareOneValueOriginalKey(database, indexInternal);
+        recordKeyValueIndex = new IndexTxAwareOneValueOriginalKey(database, indexInternal);
       } else {
         recordKeyValueIndex = index;
       }
@@ -302,7 +302,7 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
     final OIndex recordKeyValueIndex;
     if (indexInternal != null) {
       recordKeyValueIndex =
-          new OIndexTxAwareOneValueOriginalKey(graph.getRawGraph(), indexInternal);
+          new IndexTxAwareOneValueOriginalKey(graph.getRawGraph(), indexInternal);
     } else {
       recordKeyValueIndex = index;
     }

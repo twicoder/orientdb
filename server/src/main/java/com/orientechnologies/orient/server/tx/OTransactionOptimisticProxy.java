@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.tx;
 
+import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
@@ -211,7 +212,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
       OTransactionIndexChanges transactionIndexChanges = indexEntries.get(indexEntry.getKey());
 
       if (transactionIndexChanges == null) {
-        transactionIndexChanges = new OTransactionIndexChanges();
+        transactionIndexChanges = new OTransactionIndexChanges(ODefaultComparator.INSTANCE);
         indexEntries.put(indexEntry.getKey(), transactionIndexChanges);
       }
 
