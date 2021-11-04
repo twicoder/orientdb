@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.index;
 
 import com.ibm.icu.text.Collator;
+import com.orientechnologies.common.comparator.CollatorComparator;
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -10,7 +11,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.index.nkbtree.normalizers.KeyNormalizers;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
-
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -22,6 +22,7 @@ public class IndexTxAwareOneValueBinaryKey extends OIndexTxAware<OIdentifiable>
   private final Collator collator;
   private final KeyNormalizers keyNormalizers;
   private final OType[] keyTypes;
+  private final CollatorComparator comparator;
 
   public IndexTxAwareOneValueBinaryKey(
       final ODatabaseDocumentInternal database,
@@ -35,6 +36,7 @@ public class IndexTxAwareOneValueBinaryKey extends OIndexTxAware<OIdentifiable>
 
     this.keyNormalizers = keyNormalizers;
     this.keyTypes = keyTypes;
+    this.comparator = new CollatorComparator(collator);
   }
 
   private class PureTxBetweenIndexForwardSpliterator
@@ -83,7 +85,7 @@ public class IndexTxAwareOneValueBinaryKey extends OIndexTxAware<OIdentifiable>
         result = calculateTxIndexEntry(nextKey, null, indexChanges);
         nextKey = indexChanges.getHigherKey(nextKey);
 
-        if (nextKey != null && ODefaultComparator.INSTANCE.compare(nextKey, lastKey) > 0) {
+        if (nextKey != null && comparator.compare(nextKey, lastKey) > 0) {
           nextKey = null;
         }
 
@@ -164,8 +166,7 @@ public class IndexTxAwareOneValueBinaryKey extends OIndexTxAware<OIdentifiable>
         result = calculateTxIndexEntry(nextKey, null, indexChanges);
         nextKey = indexChanges.getLowerKey(nextKey);
 
-        if (nextKey != null && ODefaultComparator.INSTANCE.compare(nextKey, firstKey) < 0)
-          nextKey = null;
+        if (nextKey != null && comparator.compare(nextKey, firstKey) < 0) nextKey = null;
       } while (result == null && nextKey != null);
 
       if (result == null) {

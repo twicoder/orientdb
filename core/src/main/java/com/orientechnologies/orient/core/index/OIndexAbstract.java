@@ -238,7 +238,8 @@ public abstract class OIndexAbstract implements IndexInternal {
               true,
               version,
               1,
-              this instanceof IndexMultiValuesOriginalKey,
+              this instanceof IndexMultiValuesOriginalKey
+                  || this instanceof IndexNotUniqueBinaryKey,
               engineProperties,
               clustersToIndex,
               metadata);
@@ -304,7 +305,8 @@ public abstract class OIndexAbstract implements IndexInternal {
                   true,
                   version,
                   1,
-                  this instanceof IndexMultiValuesOriginalKey,
+                  this instanceof IndexMultiValuesOriginalKey
+                      || this instanceof IndexNotUniqueBinaryKey,
                   engineProperties);
           apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
         }
@@ -583,7 +585,8 @@ public abstract class OIndexAbstract implements IndexInternal {
               true,
               version,
               1,
-              this instanceof IndexMultiValuesOriginalKey,
+              this instanceof IndexMultiValuesOriginalKey
+                  || this instanceof IndexNotUniqueBinaryKey,
               engineProperties,
               clustersToIndex,
               metadata);

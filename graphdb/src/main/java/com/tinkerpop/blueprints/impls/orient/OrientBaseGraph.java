@@ -475,8 +475,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
 
     index = new OrientIndexManual(this, idx);
 
-    if (indexClass.isAssignableFrom(index.getIndexClass())) return (Index<T>) index;
-    else throw ExceptionFactory.indexDoesNotSupportClass(indexName, indexClass);
+    if (indexClass.isAssignableFrom(index.getIndexClass())) {
+      return (Index<T>) index;
+    } else {
+      throw ExceptionFactory.indexDoesNotSupportClass(indexName, indexClass);
+    }
   }
 
   /**

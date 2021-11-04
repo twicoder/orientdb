@@ -789,7 +789,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
   public OIndex preProcessBeforeReturn(ODatabaseDocumentInternal database, final OIndex index) {
     final IndexInternal indexInternal = index.getInternal();
     if (indexInternal instanceof IndexMultiValuesOriginalKey) {
-      return new OIndexTxAwareMultiValueOriginal(database, indexInternal);
+      return new IndexTxAwareMultiValueOriginalKey(database, indexInternal);
     } else if (indexInternal instanceof OIndexDictionary) {
       return new IndexTxAwareDictionary(database, indexInternal);
     } else if (indexInternal instanceof IndexOneValueOriginalKey) {
@@ -802,6 +802,16 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
           indexInternal,
           indexUniqueBinaryKey.getCollator(),
           indexUniqueBinaryKey.getKeyNormalizers(),
+          index.getKeyTypes());
+    } else if (indexInternal instanceof IndexNotUniqueBinaryKey) {
+      final IndexNotUniqueBinaryKey indexNotUniqueBinaryKey =
+          (IndexNotUniqueBinaryKey) indexInternal;
+
+      return new IndexTxAwareMultiValueBinaryKey(
+          database,
+          indexInternal,
+          indexNotUniqueBinaryKey.getCollator(),
+          indexNotUniqueBinaryKey.getKeyNormalizers(),
           index.getKeyTypes());
     }
 
