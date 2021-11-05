@@ -114,7 +114,6 @@ public class OIndexDefinitionFactory {
       List<OCollate> collates,
       String indexKind,
       String algorithm) {
-    final OIndexFactory factory = OIndexes.getFactory(indexKind, algorithm);
     final String className = oClass.getName();
     final OCompositeIndexDefinition compositeIndex = new OCompositeIndexDefinition(className);
 

@@ -81,6 +81,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
    * @param metadata document with additional properties that can be used by index engine.
    * @return a newly created index instance
    */
+  @Override
   public OIndex createIndex(
       ODatabaseDocumentInternal database,
       final String iName,
@@ -149,7 +150,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     final Locale locale = getServerLocale();
     type = type.toUpperCase(locale);
     if (algorithm == null) {
-      algorithm = OIndexes.chooseDefaultIndexAlgorithm(type);
+      algorithm = OIndexes.chooseDefaultIndexAlgorithm(type, database.getConfiguration());
     }
 
     final String valueContainerAlgorithm = chooseContainerAlgorithm(type);

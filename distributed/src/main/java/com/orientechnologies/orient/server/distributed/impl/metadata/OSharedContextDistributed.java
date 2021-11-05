@@ -137,7 +137,8 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
           // create geospatial classes
           try {
             OIndexFactory factory =
-                OIndexes.getFactory(OClass.INDEX_TYPE.SPATIAL.toString(), "LUCENE");
+                OIndexes.getFactory(
+                    OClass.INDEX_TYPE.SPATIAL.toString(), "LUCENE", database.getConfiguration());
             if (factory != null && factory instanceof ODatabaseLifecycleListener) {
               ((ODatabaseLifecycleListener) factory).onCreate(database);
             }

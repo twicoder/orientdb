@@ -32,8 +32,6 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
 import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexFactory;
-import com.orientechnologies.orient.core.index.OIndexes;
 import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
@@ -273,8 +271,6 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract
     }
 
     if (fields == null || fields.length == 0) {
-      OIndexFactory factory = OIndexes.getFactory(indexType.toString(), null);
-
       if (keyTypes != null)
         idx =
             database

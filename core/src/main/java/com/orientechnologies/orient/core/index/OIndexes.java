@@ -18,6 +18,8 @@ package com.orientechnologies.orient.core.index;
 import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
 
 import com.orientechnologies.common.util.OCollections;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.engine.BaseIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -118,9 +120,10 @@ public final class OIndexes {
     return engines;
   }
 
-  public static OIndexFactory getFactory(String indexType, String algorithm) {
+  public static OIndexFactory getFactory(
+      final String indexType, String algorithm, OContextConfiguration configuration) {
     if (algorithm == null) {
-      algorithm = chooseDefaultIndexAlgorithm(indexType);
+      algorithm = chooseDefaultIndexAlgorithm(indexType, configuration);
     }
 
     algorithm = algorithm.toUpperCase(Locale.ENGLISH);
@@ -211,14 +214,22 @@ public final class OIndexes {
         indexProperties);
   }
 
-  public static String chooseDefaultIndexAlgorithm(String type) {
+  public static String chooseDefaultIndexAlgorithm(
+      String type, OContextConfiguration contextConfiguration) {
     String algorithm = null;
 
     if (OClass.INDEX_TYPE.DICTIONARY.name().equalsIgnoreCase(type)
         || OClass.INDEX_TYPE.FULLTEXT.name().equalsIgnoreCase(type)
         || OClass.INDEX_TYPE.NOTUNIQUE.name().equalsIgnoreCase(type)
         || OClass.INDEX_TYPE.UNIQUE.name().equalsIgnoreCase(type)) {
-      algorithm = ODefaultIndexFactory.CELL_BTREE_ALGORITHM;
+
+      if (contextConfiguration.getValueAsBoolean(
+          OGlobalConfiguration.INDEX_USE_BINARY_TREE_BY_DEFAULT)) {
+        algorithm = ODefaultIndexFactory.BINARY_TREE_ALGORITHM;
+      } else {
+        algorithm = ODefaultIndexFactory.CELL_BTREE_ALGORITHM;
+      }
+
     } else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name().equalsIgnoreCase(type)
         || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.name().equalsIgnoreCase(type)
         || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name().equalsIgnoreCase(type)) {

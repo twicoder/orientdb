@@ -145,7 +145,6 @@ public abstract class OIndexAbstract implements IndexInternal {
     } else {
       // @COMPATIBILITY 1.0rc6 new index model was implemented
       final Boolean isAutomatic = config.field(IndexInternal.CONFIG_AUTOMATIC);
-      OIndexFactory factory = OIndexes.getFactory(type, algorithm);
       if (Boolean.TRUE.equals(isAutomatic)) {
         final int pos = indexName.lastIndexOf('.');
         if (pos < 0)

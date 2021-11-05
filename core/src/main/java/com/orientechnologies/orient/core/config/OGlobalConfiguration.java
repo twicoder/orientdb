@@ -811,6 +811,13 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       -1,
       true),
 
+  INDEX_USE_BINARY_TREE_BY_DEFAULT(
+      "index.useBinaryTreeByDefault",
+      "Use new binary tree implemention as default implementation of index (disabled by default)",
+      Boolean.class,
+      false,
+      true),
+
   HASH_TABLE_SPLIT_BUCKETS_BUFFER_LENGTH(
       "hashTable.slitBucketsBuffer.length",
       "Length of buffer (in pages), where buckets "

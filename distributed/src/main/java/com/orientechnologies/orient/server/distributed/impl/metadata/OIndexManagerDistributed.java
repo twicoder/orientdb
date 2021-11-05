@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.metadata;
 
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -35,6 +36,7 @@ public class OIndexManagerDistributed extends OIndexManagerShared {
 
   public OIndex createIndex(
       ODatabaseDocumentInternal database,
+      OContextConfiguration configuration,
       final String iName,
       final String iType,
       final OIndexDefinition indexDefinition,

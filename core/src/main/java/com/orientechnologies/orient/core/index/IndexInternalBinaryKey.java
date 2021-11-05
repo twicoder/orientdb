@@ -76,23 +76,28 @@ public interface IndexInternalBinaryKey extends IndexInternal {
   static ORawPair<Collator, KeyNormalizers> createCollatorNormalizers(
       OStorage storage, ODocument metadata) {
     final Locale locale;
-    final String languageTag = metadata.getProperty(ODefaultIndexFactory.BINARY_TREE_LOCALE);
-    if (languageTag == null) {
-      locale = storage.getConfiguration().getLocaleInstance();
-    } else {
-      locale = Locale.forLanguageTag(languageTag);
-    }
-
     int decomposition = Collator.NO_DECOMPOSITION;
-    final String decompositionTag =
-        metadata.getProperty(ODefaultIndexFactory.BINARY_TREE_DECOMPOSITION).toString();
 
-    if (decompositionTag != null) {
-      try {
-        decomposition = Integer.parseInt(decompositionTag);
-      } catch (NumberFormatException e) {
-        // ignore
+    if (metadata != null) {
+      final String languageTag = metadata.getProperty(ODefaultIndexFactory.BINARY_TREE_LOCALE);
+      if (languageTag == null) {
+        locale = storage.getConfiguration().getLocaleInstance();
+      } else {
+        locale = Locale.forLanguageTag(languageTag);
       }
+
+      final String decompositionTag =
+          metadata.getProperty(ODefaultIndexFactory.BINARY_TREE_DECOMPOSITION).toString();
+
+      if (decompositionTag != null) {
+        try {
+          decomposition = Integer.parseInt(decompositionTag);
+        } catch (NumberFormatException e) {
+          // ignore
+        }
+      }
+    } else {
+      locale = storage.getConfiguration().getLocaleInstance();
     }
 
     final Collator collator = Collator.getInstance(locale);
