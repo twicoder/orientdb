@@ -53,7 +53,7 @@ public class IndexUniqueOriginalKey extends IndexOneValueOriginalKey {
         }
 
         if (!newValue.getIdentity().isPersistent()) {
-          newValue = newValue.getRecord();
+          newValue = newValue.getRecord().getIdentity();
         }
         return newValue.getIdentity();
       };

@@ -312,9 +312,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       publishLocalNodeConfiguration();
 
-      installNewDatabasesFromCluster();
-
-      loadLocalDatabases();
+      new Thread(
+              () -> {
+                try {
+                  installNewDatabasesFromCluster();
+                  loadLocalDatabases();
+                } finally {
+                  serverStarted.countDown();
+                }
+              })
+          .start();
 
       membershipListenerMapRegistration =
           configurationMap.getHazelcastMap().addEntryListener(this, true);
@@ -348,9 +355,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       for (OServerNetworkListener nl : serverInstance.getNetworkListeners())
         nl.registerBeforeConnectNetworkEventListener(this);
-
-      // WAIT ALL THE MESSAGES IN QUEUE ARE PROCESSED OR MAX 10 SECONDS
-      waitStartupIsCompleted();
 
       signalListener =
           new OSignalHandler.OSignalListener() {
@@ -547,22 +551,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   @Override
   public String getLockManagerServer() {
     return "";
-  }
-
-  protected void waitStartupIsCompleted() throws InterruptedException {
-    long totalReceivedRequests = getMessageService().getReceivedRequests();
-    long totalProcessedRequests = getMessageService().getProcessedRequests();
-
-    final long start = System.currentTimeMillis();
-    while (totalProcessedRequests < totalReceivedRequests - 2
-        && (System.currentTimeMillis() - start
-            < OGlobalConfiguration.DISTRIBUTED_MAX_STARTUP_DELAY.getValueAsInteger())) {
-      Thread.sleep(300);
-      totalProcessedRequests = getMessageService().getProcessedRequests();
-      totalReceivedRequests = getMessageService().getReceivedRequests();
-    }
-
-    serverStarted.countDown();
   }
 
   protected void publishLocalNodeConfiguration() {

@@ -362,7 +362,10 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
 
         if (document.isTrackingChanges()) document.undo();
         else document.unload();
-      } else record.unload();
+      } else {
+        record.unload();
+      }
+      database.getLocalCache().deleteRecord(record.getIdentity());
     }
 
     reset();
@@ -412,10 +415,11 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
     return recordOperations.get(translateRid(rid));
   }
 
-  private ORID translateRid(ORID rid) {
+  private ORID translateRid(ORID ridPar) {
+    ORID rid = ridPar;
     while (true) {
       final ORID translatedRid = updatedRids.get(rid);
-      if (translatedRid == null) break;
+      if (translatedRid == null || translatedRid.equals(ridPar)) break;
 
       rid = translatedRid;
     }
@@ -796,8 +800,8 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
       if (op.getValue().type == ORecordOperation.CREATED) {
         ORecordId oldNew =
             new ORecordId(op.getKey().getClusterId(), op.getKey().getClusterPosition());
-        updatedRids.remove(op.getValue().getRID());
         updateIdentityAfterRecordCommit(op.getValue().getRID(), oldNew);
+        updatedRids.remove(op.getValue().getRID());
       }
     }
   }

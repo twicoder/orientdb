@@ -131,14 +131,15 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
     return allEntries.values();
   }
 
-  public ORecordOperation getRecordEntry(ORID rid) {
+  public ORecordOperation getRecordEntry(ORID ridPar) {
     ORecordOperation entry;
+    ORID rid = ridPar;
     do {
       entry = allEntries.get(rid);
       if (entry == null) {
         rid = updatedRids.get(rid);
       }
-    } while (entry == null && rid != null);
+    } while (entry == null && rid != null && !rid.equals(ridPar));
     return entry;
   }
 
@@ -636,8 +637,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
       if (op.getValue().type == ORecordOperation.CREATED) {
         ORecordId oldNew =
             new ORecordId(op.getKey().getClusterId(), op.getKey().getClusterPosition());
-        updatedRids.remove(op.getValue().getRID());
         updateIdentityAfterCommit(op.getValue().getRID(), oldNew);
+        updatedRids.remove(op.getValue().getRID());
       }
     }
   }
