@@ -815,7 +815,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "index.useBinaryTreeByDefault",
       "Use new binary tree implemention as default implementation of index (disabled by default)",
       Boolean.class,
-      false,
+      true,
       true),
 
   HASH_TABLE_SPLIT_BUCKETS_BUFFER_LENGTH(

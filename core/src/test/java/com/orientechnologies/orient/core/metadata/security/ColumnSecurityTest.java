@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.sql.executor.FetchFromBinaryIndexStep;
 import com.orientechnologies.orient.core.sql.executor.FetchFromIndexStep;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -264,7 +265,8 @@ public class ColumnSecurityTest {
     Assert.assertFalse(rs.hasNext());
     Assert.assertTrue(
         rs.getExecutionPlan().get().getSteps().stream()
-            .anyMatch(x -> x instanceof FetchFromIndexStep));
+            .anyMatch(
+                x -> x instanceof FetchFromIndexStep || x instanceof FetchFromBinaryIndexStep));
     rs.close();
   }
 

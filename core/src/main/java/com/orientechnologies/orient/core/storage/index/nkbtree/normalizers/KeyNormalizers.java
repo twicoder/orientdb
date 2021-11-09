@@ -24,6 +24,7 @@ public class KeyNormalizers {
     normalizers.put(OType.DATE, new DateKeyNormalizer());
     normalizers.put(OType.DATETIME, new DateTimeKeyNormalizer());
     normalizers.put(OType.BINARY, new BinaryKeyNormalizer());
+    normalizers.put(OType.LINK, new LinkKeyNormalizer());
   }
 
   private final Collator collator;

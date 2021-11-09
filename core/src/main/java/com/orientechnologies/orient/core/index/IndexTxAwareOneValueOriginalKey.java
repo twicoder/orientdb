@@ -250,6 +250,21 @@ public class IndexTxAwareOneValueOriginalKey extends OIndexTxAware<OIdentifiable
   }
 
   @Override
+  public OIndex put(Object key, OIdentifiable value) {
+    return doPut(key, null, value);
+  }
+
+  @Override
+  public boolean remove(Object key) {
+    return doRemove(key, null);
+  }
+
+  @Override
+  public boolean remove(Object key, OIdentifiable rid) {
+    return doRemove(key, null, rid);
+  }
+
+  @Override
   public Stream<ORawPair<Object, ORID>> stream() {
     final IndexInternalOriginalKey indexInternalOriginalKeyDelegate =
         (IndexInternalOriginalKey) delegate;

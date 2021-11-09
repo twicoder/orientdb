@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -434,12 +435,10 @@ public class OCommandExecutorSQLSelectTest {
 
   @Test
   public void testUseIndexWithOrderBy2() throws Exception {
-    long idxUsagesBefore = indexUsages(db);
-
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("select * from foo where address.city = 'NY' order by name ASC"))
-            .execute();
-    assertEquals(qResult.size(), 1);
+    try (OResultSet qResult =
+        db.query("select * from foo where address.city = 'NY' order by name ASC")) {
+      assertEquals(qResult.stream().count(), 1);
+    }
   }
 
   @Test
@@ -467,13 +466,9 @@ public class OCommandExecutorSQLSelectTest {
 
   @Test
   public void testCompositeIndex() {
-    long idxUsagesBefore = indexUsages(db);
-
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("select * from foo where comp = 'a' and osite = 1")).execute();
-
-    assertEquals(qResult.size(), 1);
-    assertEquals(indexUsages(db), idxUsagesBefore + 1);
+    try (OResultSet qResult = db.query("select * from foo where comp = 'a' and osite = 1")) {
+      assertEquals(qResult.stream().count(), 1);
+    }
   }
 
   @Test
@@ -500,15 +495,10 @@ public class OCommandExecutorSQLSelectTest {
 
   @Test
   public void testCompositeIndex2() {
-    long idxUsagesBefore = indexUsages(db);
-
-    List<ODocument> qResult =
-        db.command(
-                new OCommandSQL("select * from foo where (comp = 'a' and osite = 1) or name = 'a'"))
-            .execute();
-
-    assertEquals(qResult.size(), 2);
-    assertEquals(indexUsages(db), idxUsagesBefore + 2);
+    try (OResultSet qResult =
+        db.query("select * from foo where (comp = 'a' and osite = 1) or name = 'a'")) {
+      assertEquals(qResult.stream().count(), 2);
+    }
   }
 
   @Test

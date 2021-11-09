@@ -26,8 +26,10 @@ public final class BinaryBTree extends ODurableComponent {
   private static final long ROOT_INDEX = 1;
 
   public static final byte ALWAYS_LESS_PREFIX = 0;
+
   public static final byte DATA_PREFIX = 1;
   public static final byte NULL_PREFIX = 2;
+
   public static final byte ALWAYS_GREATER_PREFIX = 3;
 
   private static final byte[] ROOT_LARGEST_LOWER_BOUND = new byte[] {DATA_PREFIX};
@@ -197,7 +199,7 @@ public final class BinaryBTree extends ODurableComponent {
     }
 
     final byte[] keyPrefix = new byte[keyPrefixLen];
-    System.arraycopy(smallestUpperBound, 0, keyPrefix, 0, keyPrefixLen);
+    System.arraycopy(largestLowerBound, 0, keyPrefix, 0, keyPrefixLen);
     return keyPrefix;
   }
 

@@ -82,8 +82,8 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
     return tot;
   }
 
-  @Override
-  public OIndexTxAware<T> put(Object key, final OIdentifiable value) {
+  protected OIndexTxAware<T> doPut(
+      Object key, final byte[] normalizedKey, final OIdentifiable value) {
     checkForKeyType(key);
     final ORID rid = value.getIdentity();
 
@@ -100,25 +100,23 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
 
     database
         .getMicroOrRegularTransaction()
-        .addIndexEntry(delegate, super.getName(), OPERATION.PUT, key, value);
+        .addIndexEntry(delegate, super.getName(), OPERATION.PUT, key, normalizedKey, value);
     return this;
   }
 
-  @Override
-  public boolean remove(Object key) {
+  protected boolean doRemove(Object key, byte[] normalizedKey) {
     key = getCollatingValue(key);
     database
         .getMicroOrRegularTransaction()
-        .addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, key, null);
+        .addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, key, normalizedKey, null);
     return true;
   }
 
-  @Override
-  public boolean remove(Object key, final OIdentifiable rid) {
+  protected boolean doRemove(Object key, byte[] normalizedKey, OIdentifiable rid) {
     key = getCollatingValue(key);
     database
         .getMicroOrRegularTransaction()
-        .addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, key, rid);
+        .addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, key, normalizedKey, rid);
     return true;
   }
 
@@ -127,7 +125,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
   public OIndexTxAware<T> clear() {
     database
         .getMicroOrRegularTransaction()
-        .addIndexEntry(delegate, super.getName(), OPERATION.CLEAR, null, null);
+        .addIndexEntry(delegate, super.getName(), OPERATION.CLEAR, null, null, null);
     return this;
   }
 

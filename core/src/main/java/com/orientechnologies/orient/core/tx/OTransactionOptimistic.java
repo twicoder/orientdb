@@ -628,12 +628,14 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       ODatabaseDocumentInternal database,
       OIndex index,
       String indexName,
-      OTransactionIndexChanges.OPERATION iOperation,
+      OTransactionIndexChanges.OPERATION operation,
       Object key,
-      OIdentifiable iValue,
+      byte[] normalizedKey,
+      OIdentifiable value,
       boolean clientTrackOnly) {
     changed = true;
-    super.addIndexEntry(database, index, indexName, iOperation, key, iValue, clientTrackOnly);
+    super.addIndexEntry(
+        database, index, indexName, operation, key, normalizedKey, value, clientTrackOnly);
   }
 
   public void resetChangesTracking() {
@@ -773,6 +775,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           indexChange.index.getName(),
           indexChange.operation,
           indexChange.key,
+          null,
           indexChange.value);
     }
   }

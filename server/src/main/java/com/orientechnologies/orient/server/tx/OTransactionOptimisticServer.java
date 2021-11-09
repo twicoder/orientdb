@@ -521,8 +521,9 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
       String iIndexName,
       OTransactionIndexChanges.OPERATION iOperation,
       Object key,
+      byte[] normalizedKey,
       OIdentifiable iValue) {
-    super.addIndexEntry(delegate, iIndexName, iOperation, key, iValue);
+    super.addIndexEntry(delegate, iIndexName, iOperation, key, normalizedKey, iValue);
     changed = true;
   }
 
@@ -531,11 +532,13 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
       ODatabaseDocumentInternal database,
       OIndex index,
       String indexName,
-      OTransactionIndexChanges.OPERATION iOperation,
+      OTransactionIndexChanges.OPERATION operation,
       Object key,
-      OIdentifiable iValue,
+      byte[] normalizedKey,
+      OIdentifiable value,
       boolean clientTrackOnly) {
-    super.addIndexEntry(database, index, indexName, iOperation, key, iValue, clientTrackOnly);
+    super.addIndexEntry(
+        database, index, indexName, operation, key, normalizedKey, value, clientTrackOnly);
     changed = true;
   }
 }

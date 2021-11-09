@@ -268,8 +268,9 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
       final String iIndexName,
       final OPERATION iOperation,
       final Object key,
+      byte[] normalizedKey,
       final OIdentifiable iValue) {
-    addIndexEntry(null, delegate, iIndexName, iOperation, key, iValue, false);
+    addIndexEntry(null, delegate, iIndexName, iOperation, key, normalizedKey, iValue, false);
   }
 
   /** Bufferizes index changes to be flushed at commit time. */
@@ -277,9 +278,10 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
       final ODatabaseDocumentInternal database,
       final OIndex index,
       final String indexName,
-      final OPERATION iOperation,
+      final OPERATION operation,
       final Object key,
-      final OIdentifiable iValue,
+      final byte[] normalizedKey,
+      final OIdentifiable value,
       boolean clientTrackOnly) {
     final OTransactionIndexChanges indexEntry;
     if (index instanceof IndexInternalOriginalKey) {
@@ -297,24 +299,32 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
               });
     }
 
-    if (iOperation == OPERATION.CLEAR) indexEntry.setCleared();
-    else {
-      OTransactionIndexChangesPerKey changes = indexEntry.getChangesPerKey(key);
-      changes.clientTrackOnly = clientTrackOnly;
-      changes.add(iValue, iOperation);
+    if (operation == OPERATION.CLEAR) {
+      indexEntry.setCleared();
+    } else {
+      final ORID rid;
+      if (value == null) {
+        rid = null;
+      } else {
+        rid = value.getIdentity();
+      }
 
-      if (iValue == null) return;
+      indexEntry.addChanges(operation, key, normalizedKey, rid, clientTrackOnly);
+
+      if (value == null) {
+        return;
+      }
 
       List<OTransactionRecordIndexOperation> transactionIndexOperations =
-          recordIndexOperations.get(iValue.getIdentity());
+          recordIndexOperations.get(value.getIdentity());
 
       if (transactionIndexOperations == null) {
-        transactionIndexOperations = new ArrayList<OTransactionRecordIndexOperation>();
-        recordIndexOperations.put(iValue.getIdentity().copy(), transactionIndexOperations);
+        transactionIndexOperations = new ArrayList<>();
+        recordIndexOperations.put(value.getIdentity().copy(), transactionIndexOperations);
       }
 
       transactionIndexOperations.add(
-          new OTransactionRecordIndexOperation(indexName, key, iOperation));
+          new OTransactionRecordIndexOperation(indexName, key, operation));
     }
   }
 

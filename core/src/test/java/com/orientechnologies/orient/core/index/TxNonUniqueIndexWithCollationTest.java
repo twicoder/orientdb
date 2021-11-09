@@ -26,8 +26,10 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -64,14 +66,18 @@ public class TxNonUniqueIndexWithCollationTest {
 
     db.command(new OCommandSQL("update user set name='abd' where name='Aby'")).execute();
 
-    final OLegacyResultSet<ODocument> r =
-        db.command(new OCommandSQL("select * from user where name like '%B%' order by name"))
-            .execute();
-    assertEquals(4, r.size());
-    assertEquals("abc", r.get(0).field("name"));
-    assertEquals("abd", r.get(1).field("name"));
-    assertEquals("abd", r.get(2).field("name"));
-    assertEquals("abz", r.get(3).field("name"));
+    try (final OResultSet r = db.query("select * from user where name like '%B%' order by name")) {
+      assertEquals(
+          "abc", r.next().getElement().orElseThrow(IllegalStateException::new).getProperty("name"));
+      assertEquals(
+          "abd", r.next().getElement().orElseThrow(IllegalStateException::new).getProperty("name"));
+      assertEquals(
+          "abd", r.next().getElement().orElseThrow(IllegalStateException::new).getProperty("name"));
+      assertEquals(
+          "abz", r.next().getElement().orElseThrow(IllegalStateException::new).getProperty("name"));
+
+      Assert.assertFalse(r.hasNext());
+    }
 
     db.commit();
   }
@@ -82,13 +88,15 @@ public class TxNonUniqueIndexWithCollationTest {
 
     db.command(new OCommandSQL("update user set name='Abd' where name='Aby'")).execute();
 
-    final OLegacyResultSet<ODocument> r =
-        db.command(new OCommandSQL("select * from user where name >= 'abd' order by name"))
-            .execute();
-    assertEquals(3, r.size());
-    assertEquals("Abd", r.get(0).field("name"));
-    assertEquals("Abd", r.get(1).field("name"));
-    assertEquals("abz", r.get(2).field("name"));
+    try (final OResultSet r = db.query("select * from user where name >= 'abd' order by name")) {
+      assertEquals(
+          "Abd", r.next().getElement().orElseThrow(IllegalStateException::new).getProperty("name"));
+      assertEquals(
+          "Abd", r.next().getElement().orElseThrow(IllegalStateException::new).getProperty("name"));
+      assertEquals(
+          "abz", r.next().getElement().orElseThrow(IllegalStateException::new).getProperty("name"));
+      Assert.assertFalse(r.hasNext());
+    }
 
     db.commit();
   }

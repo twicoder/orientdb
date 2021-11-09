@@ -746,11 +746,12 @@ public abstract class OIndexAbstract implements IndexInternal {
           try (final Stream<ORawPair<Object, ORID>> stream = indexInternalObject.stream()) {
             stream.forEach((pair) -> remove(pair.first, pair.second));
           }
+
+          try (Stream<ORID> stream = getRids(null)) {
+            stream.forEach((rid) -> remove(null, rid));
+          }
         }
 
-        try (Stream<ORID> stream = getRids(null)) {
-          stream.forEach((rid) -> remove(null, rid));
-        }
         storage.deleteIndexEngine(indexId);
         break;
       } catch (OInvalidIndexEngineIdException ignore) {

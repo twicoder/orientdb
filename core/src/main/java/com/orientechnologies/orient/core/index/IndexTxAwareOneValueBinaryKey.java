@@ -229,6 +229,33 @@ public class IndexTxAwareOneValueBinaryKey extends OIndexTxAware<OIdentifiable>
     return new ORawPair<>(key, result);
   }
 
+  private ORawPair<byte[], ORID> calculateTxIndexBinaryEntry(
+      byte[] key, final ORID backendValue, final OTransactionIndexChanges indexChanges) {
+    ORID result = backendValue;
+    final OTransactionIndexChangesPerKey changesPerKey = indexChanges.getChangesPerBinaryKey(key);
+    if (changesPerKey.isEmpty()) {
+      if (backendValue == null) {
+        return null;
+      } else {
+        return new ORawPair<>(key, backendValue);
+      }
+    }
+
+    for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry :
+        changesPerKey.getEntriesAsList()) {
+      if (entry.getOperation() == OTransactionIndexChanges.OPERATION.REMOVE) {
+        result = null;
+      } else if (entry.getOperation() == OTransactionIndexChanges.OPERATION.PUT)
+        result = entry.getValue().getIdentity();
+    }
+
+    if (result == null) {
+      return null;
+    }
+
+    return new ORawPair<>(key, result);
+  }
+
   @Deprecated
   @Override
   public OIdentifiable get(Object key) {
@@ -268,6 +295,24 @@ public class IndexTxAwareOneValueBinaryKey extends OIndexTxAware<OIdentifiable>
     }
 
     return IndexStreamSecurityDecorator.decorateRidStream(this, Stream.of(txIndexEntry.second));
+  }
+
+  @Override
+  public OIndex put(Object key, OIdentifiable value) {
+    final byte[] normalizedKey = normalizeKey(key);
+    return doPut(key, normalizedKey, value);
+  }
+
+  @Override
+  public boolean remove(Object key) {
+    final byte[] normalizedKey = normalizeKey(key);
+    return doRemove(key, normalizedKey);
+  }
+
+  @Override
+  public boolean remove(Object key, OIdentifiable rid) {
+    final byte[] normalizedKey = normalizeKey(key);
+    return doRemove(key, normalizedKey, rid);
   }
 
   @Override
@@ -511,12 +556,8 @@ public class IndexTxAwareOneValueBinaryKey extends OIndexTxAware<OIdentifiable>
     return com.orientechnologies.common.spliterators.Streams.mergeSortedSpliterators(
         txStream,
         backedStream
-            .map(
-                (entry) ->
-                    calculateTxIndexEntry(
-                        getCollatingValue(entry.first), entry.second, indexChanges))
-            .filter(Objects::nonNull)
-            .map(pair -> new ORawPair<>(normalizeKey(pair.first), pair.second)),
+            .map((entry) -> calculateTxIndexBinaryEntry(entry.first, entry.second, indexChanges))
+            .filter(Objects::nonNull),
         (entryOne, entryTwo) -> {
           if (ascSortOrder) {
             return ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);

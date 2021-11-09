@@ -78,8 +78,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.engine.*;
-import com.orientechnologies.orient.core.index.engine.v1.CellBTreeMultiValueOriginalKeyIndexEngine;
-import com.orientechnologies.orient.core.index.engine.v1.CellBTreeSingleValueOriginalKeyIndexEngine;
+import com.orientechnologies.orient.core.index.engine.v1.*;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -6116,7 +6115,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 && !(engine instanceof OSBTreeIndexEngine
                     || engine instanceof OHashTableIndexEngine
                     || engine instanceof CellBTreeSingleValueOriginalKeyIndexEngine
-                    || engine instanceof CellBTreeMultiValueOriginalKeyIndexEngine)) {
+                    || engine instanceof CellBTreeMultiValueOriginalKeyIndexEngine
+                    || engine instanceof BinaryTreeSingleValueIndexEngine
+                    || engine instanceof BinaryTreeMultiValueIndexEngine)) {
               // delete method is implemented only in non native indexes, so they do not use ODB
               // atomic operation
               engine.delete(null);

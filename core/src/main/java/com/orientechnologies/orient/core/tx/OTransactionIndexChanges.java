@@ -19,7 +19,9 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.IndexInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
@@ -36,6 +38,7 @@ public class OTransactionIndexChanges {
   }
 
   public TreeMap<Object, OTransactionIndexChangesPerKey> changesPerKey;
+  public TreeMap<byte[], OTransactionIndexChangesPerKey> changesPerNormalizedKey;
 
   public OTransactionIndexChangesPerKey nullKeyChanges = new OTransactionIndexChangesPerKey(null);
 
@@ -45,12 +48,36 @@ public class OTransactionIndexChanges {
 
   public OTransactionIndexChanges(final Comparator<Object> keyComparator) {
     this.changesPerKey = new TreeMap<>(keyComparator);
+    this.changesPerNormalizedKey = new TreeMap<>(ODefaultComparator.INSTANCE);
   }
 
   public OTransactionIndexChangesPerKey getChangesPerKey(final Object key) {
-    if (key == null) return nullKeyChanges;
+    if (key == null) {
+      return nullKeyChanges;
+    }
 
     return changesPerKey.computeIfAbsent(key, OTransactionIndexChangesPerKey::new);
+  }
+
+  public void addChanges(
+      final OTransactionIndexChanges.OPERATION operation,
+      final Object key,
+      final byte[] normalizedKey,
+      final ORID rid,
+      final boolean clientTrackOnly) {
+    final OTransactionIndexChangesPerKey changes = getChangesPerKey(key);
+
+    changes.add(rid, operation);
+    changes.clientTrackOnly = clientTrackOnly;
+
+    if (normalizedKey != null) {
+      changesPerNormalizedKey.putIfAbsent(normalizedKey, changes);
+    }
+  }
+
+  public OTransactionIndexChangesPerKey getChangesPerBinaryKey(final byte[] normalizedKey) {
+    return changesPerNormalizedKey.computeIfAbsent(
+        normalizedKey, OTransactionIndexChangesPerKey::new);
   }
 
   public void setCleared() {

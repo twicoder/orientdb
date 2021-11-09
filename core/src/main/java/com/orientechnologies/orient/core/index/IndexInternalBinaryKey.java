@@ -86,8 +86,15 @@ public interface IndexInternalBinaryKey extends IndexInternal {
         locale = Locale.forLanguageTag(languageTag);
       }
 
-      final String decompositionTag =
-          metadata.getProperty(ODefaultIndexFactory.BINARY_TREE_DECOMPOSITION).toString();
+      Object decompositionTagValue =
+          metadata.getProperty(ODefaultIndexFactory.BINARY_TREE_DECOMPOSITION);
+      String decompositionTag;
+
+      if (decompositionTagValue == null) {
+        decompositionTag = null;
+      } else {
+        decompositionTag = decompositionTagValue.toString();
+      }
 
       if (decompositionTag != null) {
         try {
@@ -102,6 +109,7 @@ public interface IndexInternalBinaryKey extends IndexInternal {
 
     final Collator collator = Collator.getInstance(locale);
     collator.setDecomposition(decomposition);
+    collator.freeze();
 
     final KeyNormalizers keyNormalizers = new KeyNormalizers(collator);
 

@@ -65,7 +65,6 @@
             <class name="com.orientechnologies.orient.test.database.auto.IndexClusterTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ByteArrayKeyTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ClassIndexManagerTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.SQLSelectIndexReuseTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLCreateIndexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLDropIndexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLDropClassIndexTest"/>
@@ -86,7 +85,6 @@
             <class name="com.orientechnologies.orient.test.database.auto.LinkBagIndexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.LinkMapIndexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.IndexTxTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.OrderByIndexReuseTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.LinkSetIndexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CompositeIndexWithNullTest"/>
         </classes>
@@ -123,7 +121,6 @@
         <classes>
             <!--  <class name="com.orientechnologies.orient.test.database.auto.SQLCommandsTest" />-->
             <class name="com.orientechnologies.orient.test.database.auto.SQLInsertTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.SQLSelectTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLMetadataTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLSelectProjectionsTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLSelectGroupByTest"/>

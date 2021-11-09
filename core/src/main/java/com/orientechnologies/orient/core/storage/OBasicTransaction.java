@@ -92,6 +92,7 @@ public interface OBasicTransaction {
    * @param indexName the index name.
    * @param operation the index operation to register.
    * @param key the index key.
+   * @param normalizedKey
    * @param value the index key value.
    */
   void addIndexEntry(
@@ -99,6 +100,7 @@ public interface OBasicTransaction {
       String indexName,
       OTransactionIndexChanges.OPERATION operation,
       Object key,
+      byte[] normalizedKey,
       OIdentifiable value);
 
   /**

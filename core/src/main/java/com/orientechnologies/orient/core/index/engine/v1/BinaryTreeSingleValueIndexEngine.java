@@ -50,6 +50,7 @@ public class BinaryTreeSingleValueIndexEngine
 
     final Collator collator = Collator.getInstance(locale);
     collator.setDecomposition(decomposition);
+    collator.freeze();
 
     this.keyNormalizers = new KeyNormalizers(collator);
   }
@@ -206,6 +207,18 @@ public class BinaryTreeSingleValueIndexEngine
       boolean ascSortOrder,
       ValuesTransformer transformer) {
 
+    if (rangeFrom == null && rangeTo != null) {
+      return iterateEntriesMinor(rangeTo, toInclusive, ascSortOrder, transformer);
+    } else if (rangeFrom != null && rangeTo == null) {
+      return iterateEntriesMajor(rangeFrom, fromInclusive, ascSortOrder, transformer);
+    } else if (rangeFrom == null) {
+      if (ascSortOrder) {
+        return stream(transformer);
+      }
+
+      return descStream(transformer);
+    }
+
     final Object enhancedKeyFrom;
     final Object enhancedKeyTo;
 
@@ -235,6 +248,13 @@ public class BinaryTreeSingleValueIndexEngine
   @Override
   public Stream<ORawPair<byte[], ORID>> iterateEntriesMajor(
       Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+    if (fromKey == null) {
+      if (ascSortOrder) {
+        return stream(transformer);
+      }
+
+      return descStream(transformer);
+    }
     final Object enhancedKey;
 
     if (ascSortOrder) {
@@ -255,6 +275,14 @@ public class BinaryTreeSingleValueIndexEngine
   @Override
   public Stream<ORawPair<byte[], ORID>> iterateEntriesMinor(
       Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+    if (toKey == null) {
+      if (ascSortOrder) {
+        return stream(transformer);
+      }
+
+      return descStream(transformer);
+    }
+
     final Object enhancedKey;
     if (ascSortOrder) {
       enhancedKey =

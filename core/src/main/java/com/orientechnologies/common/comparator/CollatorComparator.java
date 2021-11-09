@@ -23,18 +23,8 @@ public class CollatorComparator implements Comparator<Object> {
       final OCompositeKey compositeKeyTwo = (OCompositeKey) objectTwo;
 
       return compositeKeyOne.compare(this, compositeKeyTwo);
-    } else if (objectOne instanceof Comparable) {
-      @SuppressWarnings("rawtypes")
-      final Comparable comparableOne = (Comparable) objectOne;
-      @SuppressWarnings("rawtypes")
-      final Comparable comparableTwo = (Comparable) objectTwo;
-
-      //noinspection unchecked
-      return comparableOne.compareTo(comparableTwo);
     } else {
-      throw new IllegalArgumentException(
-          "Not supported object type is passed into comparator "
-              + (objectOne == null ? "null" : objectOne.getClass().getName()));
+      return ODefaultComparator.INSTANCE.compare(objectOne, objectTwo);
     }
   }
 }

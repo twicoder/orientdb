@@ -245,7 +245,7 @@ public class OCreateEdgeStatementExecutionTest {
     eclazz.createProperty("out", OType.LINK, vclazz1);
     eclazz.createProperty("in", OType.LINK, vclazz2);
 
-    db.command("CREATE INDEX " + eClass + "out_in ON " + eclazz + " (out, in) UNIQUE");
+    db.command("CREATE INDEX " + eClass + "out_in ON " + eclazz + " (out, in) UNIQUE_HASH_INDEX");
 
     for (int i = 0; i < 2; i++) {
       OVertex v1 = db.newVertex(vClass1);

@@ -16,7 +16,7 @@ public final class ShortKeyNormalizer implements KeyNormalizer {
     buffer.order(ByteOrder.BIG_ENDIAN);
     buffer.position(offset);
 
-    buffer.putShort((short) ((short) key + Short.MAX_VALUE + 1));
+    buffer.putShort((short) (((short) key) + Short.MAX_VALUE + 1));
 
     return buffer.position();
   }

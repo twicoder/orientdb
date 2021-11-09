@@ -312,6 +312,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
       final String indexName,
       final OPERATION status,
       final Object key,
+      byte[] normalizedKey,
       final OIdentifiable value) {
     switch (status) {
       case CLEAR:

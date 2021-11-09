@@ -300,54 +300,55 @@ public class ODefaultIndexFactory implements OIndexFactory {
                       indexId, name, (OAbstractPaginatedStorage) storage, version);
             }
             break;
+          case BINARY_TREE_ALGORITHM:
+            final Locale locale;
+            final String languageTag = engineProperties.get(BINARY_TREE_LOCALE);
+            if (languageTag == null) {
+              locale = storage.getConfiguration().getLocaleInstance();
+            } else {
+              locale = Locale.forLanguageTag(languageTag);
+            }
+
+            int decomposition = Collator.NO_DECOMPOSITION;
+            final String decompositionTag = engineProperties.get(BINARY_TREE_DECOMPOSITION);
+
+            if (decompositionTag != null) {
+              try {
+                decomposition = Integer.parseInt(decompositionTag);
+              } catch (NumberFormatException e) {
+                // ignore
+              }
+            }
+
+            if (multiValue) {
+              indexEngine =
+                  new BinaryTreeMultiValueIndexEngine(
+                      name,
+                      indexId,
+                      (OAbstractPaginatedStorage) storage,
+                      SPLITERATOR_CACHE_SIZE,
+                      MAX_KEY_SIZE,
+                      MAX_SEARCH_DEPTH,
+                      locale,
+                      decomposition);
+            } else {
+              indexEngine =
+                  new BinaryTreeSingleValueIndexEngine(
+                      name,
+                      indexId,
+                      (OAbstractPaginatedStorage) storage,
+                      SPLITERATOR_CACHE_SIZE,
+                      MAX_KEY_SIZE,
+                      MAX_SEARCH_DEPTH,
+                      locale,
+                      decomposition);
+            }
+            break;
           default:
-            throw new IllegalStateException("Invalid name of algorithm :'" + "'");
+            throw new IllegalStateException("Invalid name of algorithm :'" + algorithm + "'");
         }
         break;
-      case BINARY_TREE_ALGORITHM:
-        final Locale locale;
-        final String languageTag = engineProperties.get(BINARY_TREE_LOCALE);
-        if (languageTag == null) {
-          locale = storage.getConfiguration().getLocaleInstance();
-        } else {
-          locale = Locale.forLanguageTag(languageTag);
-        }
 
-        int decomposition = Collator.NO_DECOMPOSITION;
-        final String decompositionTag = engineProperties.get(BINARY_TREE_DECOMPOSITION);
-
-        if (decompositionTag != null) {
-          try {
-            decomposition = Integer.parseInt(decompositionTag);
-          } catch (NumberFormatException e) {
-            // ignore
-          }
-        }
-
-        if (multiValue) {
-          indexEngine =
-              new BinaryTreeMultiValueIndexEngine(
-                  name,
-                  indexId,
-                  (OAbstractPaginatedStorage) storage,
-                  SPLITERATOR_CACHE_SIZE,
-                  MAX_KEY_SIZE,
-                  MAX_SEARCH_DEPTH,
-                  locale,
-                  decomposition);
-        } else {
-          indexEngine =
-              new BinaryTreeSingleValueIndexEngine(
-                  name,
-                  indexId,
-                  (OAbstractPaginatedStorage) storage,
-                  SPLITERATOR_CACHE_SIZE,
-                  MAX_KEY_SIZE,
-                  MAX_SEARCH_DEPTH,
-                  locale,
-                  decomposition);
-        }
-        break;
       case "remote":
         indexEngine = new ORemoteIndexEngine(indexId, name);
         break;

@@ -84,7 +84,12 @@ public class OLuceneIndexNotUnique extends OIndexAbstract
       if (transaction.isActive()) {
 
         transaction.addIndexEntry(
-            this, super.getName(), OTransactionIndexChanges.OPERATION.REMOVE, encodeKey(key), rid);
+            this,
+            super.getName(),
+            OTransactionIndexChanges.OPERATION.REMOVE,
+            encodeKey(key),
+            null,
+            rid);
         OLuceneTxChanges transactionChanges = getTransactionChanges(transaction);
         transactionChanges.remove(key, rid);
         return true;
@@ -378,7 +383,12 @@ public class OLuceneIndexNotUnique extends OIndexAbstract
       if (transaction.isActive()) {
         OLuceneTxChanges transactionChanges = getTransactionChanges(transaction);
         transaction.addIndexEntry(
-            this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, encodeKey(key), value);
+            this,
+            super.getName(),
+            OTransactionIndexChanges.OPERATION.PUT,
+            encodeKey(key),
+            null,
+            value);
 
         Document luceneDoc;
         while (true) {

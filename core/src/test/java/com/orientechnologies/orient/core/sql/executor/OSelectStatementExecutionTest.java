@@ -1094,7 +1094,9 @@ public class OSelectStatementExecutionTest {
     OExecutionPlan p2 = p.get();
     Assert.assertTrue(p2 instanceof OSelectExecutionPlan);
     OSelectExecutionPlan plan = (OSelectExecutionPlan) p2;
-    Assert.assertEquals(FetchFromIndexStep.class, plan.getSteps().get(0).getClass());
+    Assert.assertTrue(
+        plan.getSteps().get(0) instanceof FetchFromBinaryIndexStep
+            || plan.getSteps().get(0) instanceof FetchFromIndexStep);
     result.close();
   }
 
@@ -1128,7 +1130,9 @@ public class OSelectStatementExecutionTest {
     OExecutionPlan p2 = p.get();
     Assert.assertTrue(p2 instanceof OSelectExecutionPlan);
     OSelectExecutionPlan plan = (OSelectExecutionPlan) p2;
-    Assert.assertEquals(FetchFromIndexStep.class, plan.getSteps().get(0).getClass());
+    Assert.assertTrue(
+        plan.getSteps().get(0) instanceof FetchFromIndexStep
+            || plan.getSteps().get(0) instanceof FetchFromBinaryIndexStep);
     result.close();
     OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.setValue(oldAllowManual);
   }
@@ -1542,7 +1546,12 @@ public class OSelectStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     OSelectExecutionPlan plan = (OSelectExecutionPlan) result.getExecutionPlan().get();
     Assert.assertEquals(
-        1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
+        1,
+        plan.getSteps().stream()
+            .filter(
+                step ->
+                    step instanceof FetchFromIndexStep || step instanceof FetchFromBinaryIndexStep)
+            .count());
     result.close();
   }
 
@@ -1571,7 +1580,12 @@ public class OSelectStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     OSelectExecutionPlan plan = (OSelectExecutionPlan) result.getExecutionPlan().get();
     Assert.assertEquals(
-        1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
+        1,
+        plan.getSteps().stream()
+            .filter(
+                step ->
+                    step instanceof FetchFromIndexStep || step instanceof FetchFromBinaryIndexStep)
+            .count());
     result.close();
   }
 
@@ -2389,7 +2403,12 @@ public class OSelectStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     OExecutionPlan plan = result.getExecutionPlan().get();
     Assert.assertEquals(
-        1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
+        1,
+        plan.getSteps().stream()
+            .filter(
+                step ->
+                    step instanceof FetchFromIndexStep || step instanceof FetchFromBinaryIndexStep)
+            .count());
     Assert.assertEquals(
         0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
     result.close();
@@ -2436,7 +2455,12 @@ public class OSelectStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     OExecutionPlan plan = result.getExecutionPlan().get();
     Assert.assertEquals(
-        1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
+        1,
+        plan.getSteps().stream()
+            .filter(
+                step ->
+                    step instanceof FetchFromIndexStep || step instanceof FetchFromBinaryIndexStep)
+            .count());
     Assert.assertEquals(
         0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
     result.close();
@@ -2484,7 +2508,12 @@ public class OSelectStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     OExecutionPlan plan = result.getExecutionPlan().get();
     Assert.assertEquals(
-        1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
+        1,
+        plan.getSteps().stream()
+            .filter(
+                step ->
+                    step instanceof FetchFromIndexStep || step instanceof FetchFromBinaryIndexStep)
+            .count());
     Assert.assertEquals(
         0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
     result.close();
@@ -2532,7 +2561,12 @@ public class OSelectStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     OExecutionPlan plan = result.getExecutionPlan().get();
     Assert.assertEquals(
-        1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
+        1,
+        plan.getSteps().stream()
+            .filter(
+                step ->
+                    step instanceof FetchFromIndexStep || step instanceof FetchFromBinaryIndexStep)
+            .count());
     Assert.assertEquals(
         0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
     result.close();
@@ -2579,7 +2613,12 @@ public class OSelectStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     OExecutionPlan plan = result.getExecutionPlan().get();
     Assert.assertEquals(
-        1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
+        1,
+        plan.getSteps().stream()
+            .filter(
+                step ->
+                    step instanceof FetchFromIndexStep || step instanceof FetchFromBinaryIndexStep)
+            .count());
     Assert.assertEquals(
         0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
     result.close();
@@ -2626,7 +2665,12 @@ public class OSelectStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     OExecutionPlan plan = result.getExecutionPlan().get();
     Assert.assertEquals(
-        1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
+        1,
+        plan.getSteps().stream()
+            .filter(
+                step ->
+                    step instanceof FetchFromIndexStep || step instanceof FetchFromBinaryIndexStep)
+            .count());
     Assert.assertEquals(
         0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
     result.close();
@@ -3526,7 +3570,8 @@ public class OSelectStatementExecutionTest {
       Assert.assertFalse(result.hasNext());
       Assert.assertTrue(
           result.getExecutionPlan().get().getSteps().stream()
-              .anyMatch(x -> x instanceof FetchFromIndexStep));
+              .anyMatch(
+                  x -> x instanceof FetchFromIndexStep || x instanceof FetchFromBinaryIndexStep));
     }
 
     try (OResultSet result =
@@ -3536,7 +3581,8 @@ public class OSelectStatementExecutionTest {
       Assert.assertFalse(result.hasNext());
       Assert.assertTrue(
           result.getExecutionPlan().get().getSteps().stream()
-              .anyMatch(x -> x instanceof FetchFromIndexStep));
+              .anyMatch(
+                  x -> x instanceof FetchFromIndexStep || x instanceof FetchFromBinaryIndexStep));
     }
 
     try (OResultSet result =
@@ -3548,7 +3594,8 @@ public class OSelectStatementExecutionTest {
       Assert.assertFalse(result.hasNext());
       Assert.assertTrue(
           result.getExecutionPlan().get().getSteps().stream()
-              .anyMatch(x -> x instanceof FetchFromIndexStep));
+              .anyMatch(
+                  x -> x instanceof FetchFromIndexStep || x instanceof FetchFromBinaryIndexStep));
     }
 
     try (OResultSet result =
@@ -3556,14 +3603,16 @@ public class OSelectStatementExecutionTest {
       Assert.assertFalse(result.hasNext());
       Assert.assertTrue(
           result.getExecutionPlan().get().getSteps().stream()
-              .anyMatch(x -> x instanceof FetchFromIndexStep));
+              .anyMatch(
+                  x -> x instanceof FetchFromIndexStep || x instanceof FetchFromBinaryIndexStep));
     }
 
     try (OResultSet result = db.query("select from " + className + " where tags containsany []")) {
       Assert.assertFalse(result.hasNext());
       Assert.assertTrue(
           result.getExecutionPlan().get().getSteps().stream()
-              .anyMatch(x -> x instanceof FetchFromIndexStep));
+              .anyMatch(
+                  x -> x instanceof FetchFromIndexStep || x instanceof FetchFromBinaryIndexStep));
     }
   }
 
@@ -3628,7 +3677,8 @@ public class OSelectStatementExecutionTest {
       Assert.assertFalse(result.hasNext());
       Assert.assertTrue(
           result.getExecutionPlan().get().getSteps().stream()
-              .anyMatch(x -> x instanceof FetchFromIndexStep));
+              .anyMatch(
+                  x -> x instanceof FetchFromIndexStep || x instanceof FetchFromBinaryIndexStep));
     }
 
     try (OResultSet result = db.query("select from " + className + " where tag in ['foo','bar']")) {
@@ -3639,14 +3689,16 @@ public class OSelectStatementExecutionTest {
       Assert.assertFalse(result.hasNext());
       Assert.assertTrue(
           result.getExecutionPlan().get().getSteps().stream()
-              .anyMatch(x -> x instanceof FetchFromIndexStep));
+              .anyMatch(
+                  x -> x instanceof FetchFromIndexStep || x instanceof FetchFromBinaryIndexStep));
     }
 
     try (OResultSet result = db.query("select from " + className + " where tag in []")) {
       Assert.assertFalse(result.hasNext());
       Assert.assertTrue(
           result.getExecutionPlan().get().getSteps().stream()
-              .anyMatch(x -> x instanceof FetchFromIndexStep));
+              .anyMatch(
+                  x -> x instanceof FetchFromIndexStep || x instanceof FetchFromBinaryIndexStep));
     }
 
     List<String> params = new ArrayList<>();
@@ -3660,7 +3712,8 @@ public class OSelectStatementExecutionTest {
       Assert.assertFalse(result.hasNext());
       Assert.assertTrue(
           result.getExecutionPlan().get().getSteps().stream()
-              .anyMatch(x -> x instanceof FetchFromIndexStep));
+              .anyMatch(
+                  x -> x instanceof FetchFromIndexStep || x instanceof FetchFromBinaryIndexStep));
     }
   }
 
@@ -3707,7 +3760,8 @@ public class OSelectStatementExecutionTest {
       Assert.assertFalse(result.hasNext());
       Assert.assertTrue(
           result.getExecutionPlan().get().getSteps().stream()
-              .anyMatch(x -> x instanceof FetchFromIndexStep));
+              .anyMatch(
+                  x -> x instanceof FetchFromIndexStep || x instanceof FetchFromBinaryIndexStep));
     }
   }
 
@@ -3763,7 +3817,8 @@ public class OSelectStatementExecutionTest {
       Assert.assertFalse(result.hasNext());
       Assert.assertTrue(
           result.getExecutionPlan().get().getSteps().stream()
-              .anyMatch(x -> x instanceof FetchFromIndexStep));
+              .anyMatch(
+                  x -> x instanceof FetchFromIndexStep || x instanceof FetchFromBinaryIndexStep));
     }
   }
 
@@ -3833,7 +3888,8 @@ public class OSelectStatementExecutionTest {
       Assert.assertFalse(result.hasNext());
       Assert.assertTrue(
           result.getExecutionPlan().get().getSteps().stream()
-              .anyMatch(x -> x instanceof FetchFromIndexStep));
+              .anyMatch(
+                  x -> x instanceof FetchFromIndexStep || x instanceof FetchFromBinaryIndexStep));
     }
   }
 
@@ -3873,7 +3929,8 @@ public class OSelectStatementExecutionTest {
       Assert.assertFalse(result.hasNext());
       Assert.assertTrue(
           result.getExecutionPlan().get().getSteps().stream()
-              .anyMatch(x -> x instanceof FetchFromIndexStep));
+              .anyMatch(
+                  x -> x instanceof FetchFromIndexStep || x instanceof FetchFromBinaryIndexStep));
     }
   }
 
@@ -3904,7 +3961,8 @@ public class OSelectStatementExecutionTest {
       Assert.assertFalse(result.hasNext());
       Assert.assertTrue(
           result.getExecutionPlan().get().getSteps().stream()
-              .anyMatch(x -> x instanceof FetchFromIndexStep));
+              .anyMatch(
+                  x -> x instanceof FetchFromIndexStep || x instanceof FetchFromBinaryIndexStep));
     }
   }
 
@@ -4344,7 +4402,8 @@ public class OSelectStatementExecutionTest {
       Assert.assertTrue(rs.hasNext());
       Assert.assertTrue(
           rs.getExecutionPlan().get().getSteps().stream()
-              .anyMatch(x -> x instanceof FetchFromIndexStep));
+              .anyMatch(
+                  x -> x instanceof FetchFromIndexStep || x instanceof FetchFromBinaryIndexStep));
     }
   }
 

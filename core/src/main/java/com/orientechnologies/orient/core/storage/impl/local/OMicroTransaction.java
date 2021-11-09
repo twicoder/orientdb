@@ -551,7 +551,8 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
       String indexName,
       OTransactionIndexChanges.OPERATION type,
       Object key,
-      OIdentifiable value) {
+      final byte[] normalizedKey,
+      final OIdentifiable value) {
 
     final OTransactionIndexChanges indexOperation;
     if (index instanceof IndexInternalOriginalKey) {
@@ -566,13 +567,20 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
               indexName, k -> new OTransactionIndexChanges(new CollatorComparator(collator)));
     }
 
-    if (type == OTransactionIndexChanges.OPERATION.CLEAR) indexOperation.setCleared();
-    else {
-      final OTransactionIndexChangesPerKey changesPerKey = indexOperation.getChangesPerKey(key);
-      changesPerKey.clientTrackOnly = false;
-      changesPerKey.add(value, type);
+    if (type == OTransactionIndexChanges.OPERATION.CLEAR) {
+      indexOperation.setCleared();
+    } else {
+      final ORID rid;
+      if (value == null) {
+        rid = null;
+      } else {
+        rid = value.getIdentity();
+      }
 
-      if (value == null) return;
+      indexOperation.addChanges(type, key, normalizedKey, rid, false);
+      if (value == null) {
+        return;
+      }
 
       List<OTransactionRecordIndexOperation> transactionIndexOperations =
           recordIndexOperations.get(value.getIdentity());

@@ -287,6 +287,21 @@ public class IndexTxAwareMultiValueOriginalKey extends OIndexTxAware<Collection<
   }
 
   @Override
+  public OIndex put(Object key, OIdentifiable value) {
+    return doPut(key, null, value);
+  }
+
+  @Override
+  public boolean remove(Object key) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean remove(Object key, OIdentifiable rid) {
+    return doRemove(key, null, rid);
+  }
+
+  @Override
   public Stream<ORawPair<Object, ORID>> stream() {
     final OTransactionIndexChanges indexChanges =
         database.getMicroOrRegularTransaction().getIndexChangesInternal(delegate.getName());

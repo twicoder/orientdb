@@ -280,6 +280,33 @@ public class IndexTxAwareMultiValueBinaryKey extends OIndexTxAware<Collection<OI
   }
 
   @Override
+  public OIndex put(Object key, OIdentifiable value) {
+    final OCompositeKey compositeKey = new OCompositeKey(key, value);
+    final byte[] normalizedKey = keyNormalizers.normalize(compositeKey, keyTypes);
+
+    return doPut(key, normalizedKey, value);
+  }
+
+  @Override
+  public boolean remove(Object key) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean remove(Object key, OIdentifiable rid) {
+    final OCompositeKey compositeKey = new OCompositeKey(key, rid);
+    final byte[] normalizedKey = keyNormalizers.normalize(compositeKey, keyTypes);
+
+    return doRemove(key, normalizedKey, rid);
+  }
+
+  @Override
+  protected OIndexTxAware<Collection<OIdentifiable>> doPut(
+      Object key, byte[] normalizedKey, OIdentifiable value) {
+    return super.doPut(key, normalizedKey, value);
+  }
+
+  @Override
   public Stream<ORawPair<byte[], ORID>> stream() {
     final OTransactionIndexChanges indexChanges =
         database.getMicroOrRegularTransaction().getIndexChangesInternal(delegate.getName());
@@ -544,14 +571,8 @@ public class IndexTxAwareMultiValueBinaryKey extends OIndexTxAware<Collection<OI
     return com.orientechnologies.common.spliterators.Streams.mergeSortedSpliterators(
         txStream,
         backedStream
-            .map((entry) -> calculateTxIndexEntry(entry.first, entry.second, indexChanges))
-            .filter(Objects::nonNull)
-            .map(
-                pair -> {
-                  final OCompositeKey compositeKey = new OCompositeKey(pair.first, pair.second);
-                  return new ORawPair<>(
-                      keyNormalizers.normalize(compositeKey, keyTypes), pair.second);
-                }),
+            .map((entry) -> calculateTxIndexBinaryEntry(entry.first, entry.second, indexChanges))
+            .filter(Objects::nonNull),
         (entryOne, entryTwo) -> {
           if (ascOrder) {
             return ODefaultComparator.INSTANCE.compare(
@@ -567,6 +588,36 @@ public class IndexTxAwareMultiValueBinaryKey extends OIndexTxAware<Collection<OI
       Object key, final ORID backendValue, OTransactionIndexChanges indexChanges) {
     key = getCollatingValue(key);
     final OTransactionIndexChangesPerKey changesPerKey = indexChanges.getChangesPerKey(key);
+
+    if (changesPerKey.isEmpty()) {
+      return new ORawPair<>(key, backendValue);
+    }
+
+    int putCounter = 1;
+    for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry :
+        changesPerKey.getEntriesAsList()) {
+      if (entry.getOperation() == OTransactionIndexChanges.OPERATION.PUT
+          && entry.getValue().equals(backendValue)) {
+        putCounter++;
+      } else if (entry.getOperation() == OTransactionIndexChanges.OPERATION.REMOVE) {
+        if (entry.getValue() == null) {
+          putCounter = 0;
+        } else if (entry.getValue().equals(backendValue) && putCounter > 0) {
+          putCounter--;
+        }
+      }
+    }
+
+    if (putCounter <= 0) {
+      return null;
+    }
+
+    return new ORawPair<>(key, backendValue);
+  }
+
+  private ORawPair<byte[], ORID> calculateTxIndexBinaryEntry(
+      byte[] key, final ORID backendValue, OTransactionIndexChanges indexChanges) {
+    final OTransactionIndexChangesPerKey changesPerKey = indexChanges.getChangesPerBinaryKey(key);
 
     if (changesPerKey.isEmpty()) {
       return new ORawPair<>(key, backendValue);
