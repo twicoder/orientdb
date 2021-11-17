@@ -138,6 +138,8 @@ public class Orient extends OListenerManger<OOrientListener> {
   private volatile OSecuritySystem security;
   private boolean runningDistributed = false;
 
+  private volatile OByteBufferPool byteBufferPool;
+
   /** Indicates that engine is initialized inside of web application container. */
   private volatile boolean insideWebContainer;
 
@@ -254,10 +256,12 @@ public class Orient extends OListenerManger<OOrientListener> {
   public Orient startup() {
     engineLock.writeLock().lock();
     try {
-      if (active)
+      if (active) {
         // ALREADY ACTIVE
         return this;
+      }
 
+      byteBufferPool = OByteBufferPool.instance();
       if (timer == null) timer = new Timer(true);
 
       profiler = new OProfilerStub(false);
@@ -397,9 +401,9 @@ public class Orient extends OListenerManger<OOrientListener> {
       shutdownHandlers.clear();
 
       OLogManager.instance().info(this, "Clearing byte buffer pool");
-      OByteBufferPool.instance(null).clear();
+      byteBufferPool.clear();
 
-      OByteBufferPool.instance(null).checkMemoryLeaks();
+      byteBufferPool.checkMemoryLeaks();
       ODirectMemoryAllocator.instance().checkMemoryLeaks();
 
       OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
@@ -804,7 +808,7 @@ public class Orient extends OListenerManger<OOrientListener> {
     final String name = engine.getName();
 
     try {
-      engine.startup();
+      engine.startup(byteBufferPool);
       return true;
     } catch (Exception e) {
       OLogManager.instance()
@@ -970,10 +974,18 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   public void onEmbeddedFactoryInit(OrientDBEmbedded embeddedFactory) {
-    OEngine memory = engines.get("memory");
-    if (!memory.isRunning()) memory.startup();
-    OEngine disc = engines.get("plocal");
-    if (!disc.isRunning()) disc.startup();
+    final OEngine memory = engines.get("memory");
+
+    if (!memory.isRunning()) {
+      memory.startup(byteBufferPool);
+    }
+
+    final OEngine disc = engines.get("plocal");
+
+    if (!disc.isRunning()) {
+      disc.startup(byteBufferPool);
+    }
+
     factories.add(embeddedFactory);
   }
 

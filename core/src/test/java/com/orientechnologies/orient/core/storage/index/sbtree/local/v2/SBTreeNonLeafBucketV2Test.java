@@ -24,7 +24,7 @@ import org.junit.Test;
 public class SBTreeNonLeafBucketV2Test {
   @Test
   public void testInitialization() {
-    final OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    final OByteBufferPool bufferPool = OByteBufferPool.instance();
     final OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -60,7 +60,7 @@ public class SBTreeNonLeafBucketV2Test {
       keys.add(random.nextLong());
     }
 
-    final OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    final OByteBufferPool bufferPool = OByteBufferPool.instance();
     final OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -131,7 +131,7 @@ public class SBTreeNonLeafBucketV2Test {
       keys.add(random.nextLong());
     }
 
-    final OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    final OByteBufferPool bufferPool = OByteBufferPool.instance();
     final OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);

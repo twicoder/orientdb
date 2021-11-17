@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.engine;
 
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import java.util.Map;
 
 public abstract class OEngineAbstract implements OEngine {
@@ -34,7 +35,7 @@ public abstract class OEngineAbstract implements OEngine {
   }
 
   @Override
-  public void startup() {
+  public void startup(OByteBufferPool bufferPool) {
     this.running = true;
   }
 

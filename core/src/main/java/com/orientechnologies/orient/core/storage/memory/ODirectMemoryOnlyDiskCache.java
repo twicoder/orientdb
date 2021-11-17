@@ -67,9 +67,12 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
   private final int pageSize;
   private final int id;
 
-  ODirectMemoryOnlyDiskCache(final int pageSize, final int id) {
+  private final OByteBufferPool bufferPool;
+
+  ODirectMemoryOnlyDiskCache(final int pageSize, final int id, final OByteBufferPool bufferPool) {
     this.pageSize = pageSize;
     this.id = id;
+    this.bufferPool = bufferPool;
   }
 
   /** {@inheritDoc} */
@@ -88,7 +91,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
         counter++;
         final int id = counter;
 
-        files.put(id, new MemoryFile(this.id, id));
+        files.put(id, new MemoryFile(this.id, id, bufferPool));
         fileNameIdMap.put(fileName, id);
 
         fileId = id;
@@ -165,7 +168,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
         throw new OStorageException(fileName + " already exists.");
       }
 
-      files.put(intId, new MemoryFile(id, intId));
+      files.put(intId, new MemoryFile(id, intId, bufferPool));
       fileNameIdMap.put(fileName, intId);
       fileIdNameMap.put(intId, fileName);
 
@@ -468,9 +471,12 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
 
     private final ConcurrentSkipListMap<Long, OCacheEntry> content = new ConcurrentSkipListMap<>();
 
-    private MemoryFile(final int storageId, final int id) {
+    private final OByteBufferPool bufferPool;
+
+    private MemoryFile(final int storageId, final int id, final OByteBufferPool bufferPool) {
       this.storageId = storageId;
       this.id = id;
+      this.bufferPool = bufferPool;
     }
 
     private OCacheEntry loadPage(final long index) {
@@ -496,7 +502,6 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
             index = lastIndex + 1;
           }
 
-          final OByteBufferPool bufferPool = OByteBufferPool.instance(null);
           final OPointer pointer =
               bufferPool.acquireDirect(true, Intention.ADD_NEW_PAGE_IN_MEMORY_STORAGE);
 

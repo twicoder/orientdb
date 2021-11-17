@@ -107,16 +107,16 @@ public class TxNonUniqueIndexWithCollationTest {
 
     db.command(new OCommandSQL("update user set name='abd' where name='Aby'")).execute();
 
-    final OLegacyResultSet<ODocument> r =
-        db.command(
-                new OCommandSQL(
-                    "select * from user where name in ['Abc', 'Abd', 'Abz'] order by name"))
-            .execute();
-    assertEquals(4, r.size());
-    assertEquals("abc", r.get(0).field("name"));
-    assertEquals("abd", r.get(1).field("name"));
-    assertEquals("abd", r.get(2).field("name"));
-    assertEquals("abz", r.get(3).field("name"));
+    final OResultSet r =
+        db.query(
+                    "select * from user where name in ['Abc', 'Abd', 'Abz'] order by name");
+
+    assertEquals("abc", r.next().toElement().getProperty("name"));
+    assertEquals("abd", r.next().toElement().getProperty("name"));
+    assertEquals("abd", r.next().toElement().getProperty("name"));
+    assertEquals("abz", r.next().toElement().getProperty("name"));
+
+    Assert.assertFalse(r.hasNext());
 
     db.commit();
   }

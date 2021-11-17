@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.memory;
 
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -45,9 +46,16 @@ import java.util.zip.ZipOutputStream;
 public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   private static final int ONE_KB = 1024;
 
+  private final OByteBufferPool bufferPool;
+
   public ODirectMemoryStorage(
-      final String name, final String filePath, final String mode, final int id) {
+      final String name,
+      final String filePath,
+      final String mode,
+      final int id,
+      final OByteBufferPool bufferPool) {
     super(name, filePath, mode, id);
+    this.bufferPool = bufferPool;
   }
 
   @Override
@@ -60,7 +68,8 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
         new ODirectMemoryOnlyDiskCache(
             contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE)
                 * ONE_KB,
-            1);
+            1,
+            bufferPool);
 
     if (readCache == null) {
       readCache = diskCache;

@@ -4,6 +4,7 @@ import com.ibm.icu.text.Collator;
 import com.orientechnologies.common.comparator.OComparatorFactory;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.util.ORawPair;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.id.ORID;
@@ -31,6 +32,7 @@ public class BinaryBTreeTestIT {
 
   private int diskCachePageSize;
   private int btreeMaxKeySize;
+  private int binaryTreeMaxKeySize;
 
   @BeforeClass
   public static void beforeClass() {
@@ -43,11 +45,15 @@ public class BinaryBTreeTestIT {
 
   @Before
   public void before() throws Exception {
+    Orient.instance().shutdown();
+
     diskCachePageSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger();
     btreeMaxKeySize = OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger();
+    binaryTreeMaxKeySize = OGlobalConfiguration.BINARY_TREE_MAX_KEY_SIZE.getValueAsInteger();
 
     OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.setValue(4);
     OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.setValue(512);
+    OGlobalConfiguration.BINARY_TREE_MAX_KEY_SIZE.setValue(512);
 
     final String buildDirectory =
         System.getProperty("buildDirectory", ".")
@@ -58,10 +64,13 @@ public class BinaryBTreeTestIT {
     final File dbDirectory = new File(buildDirectory, dbName);
     OFileUtils.deleteRecursively(dbDirectory);
 
+    Orient.instance().startup();
+
     final OrientDBConfig config =
         OrientDBConfig.builder()
             .addConfig(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE, 4)
-            .addConfig(OGlobalConfiguration.SBTREE_MAX_KEY_SIZE, 1024)
+            .addConfig(OGlobalConfiguration.SBTREE_MAX_KEY_SIZE, 512)
+            .addConfig(OGlobalConfiguration.BINARY_TREE_MAX_KEY_SIZE, 512)
             .build();
 
     orientDB = new OrientDB("plocal:" + buildDirectory, config);
@@ -83,8 +92,12 @@ public class BinaryBTreeTestIT {
     orientDB.drop(dbName);
     orientDB.close();
 
+    Orient.instance().shutdown();
     OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.setValue(diskCachePageSize);
     OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.setValue(btreeMaxKeySize);
+    OGlobalConfiguration.BINARY_TREE_MAX_KEY_SIZE.setValue(binaryTreeMaxKeySize);
+
+    Orient.instance().startup();
   }
 
   @Test

@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.engine;
 
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.orient.core.storage.OStorage;
 import java.util.Map;
 
@@ -37,8 +38,10 @@ public interface OEngine {
   /**
    * Performs initialization of engine. Initialization of engine in constructor is prohibited and
    * all initialization steps should be done in this method.
+   *
+   * @param bufferPool
    */
-  void startup();
+  void startup(OByteBufferPool bufferPool);
 
   String getNameFromPath(String dbPath);
 

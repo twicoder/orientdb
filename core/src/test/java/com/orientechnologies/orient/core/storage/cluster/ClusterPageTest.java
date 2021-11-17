@@ -25,11 +25,9 @@ import org.junit.Test;
  * @since 20.03.13
  */
 public class ClusterPageTest {
-  private static final int SYSTEM_OFFSET = 24;
-
   @Test
   public void testAddOneRecord() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -47,6 +45,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void addOneRecord(OClusterPage localPage) {
@@ -75,7 +75,7 @@ public class ClusterPageTest {
 
   @Test
   public void testAddThreeRecords() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -92,6 +92,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void addThreeRecords(OClusterPage localPage) {
@@ -150,7 +152,7 @@ public class ClusterPageTest {
 
   @Test
   public void testAddFullPage() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -168,6 +170,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void addFullPage(OClusterPage localPage) {
@@ -207,7 +211,7 @@ public class ClusterPageTest {
 
   @Test
   public void testAddDeleteAddBookedPositionsOne() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -225,6 +229,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void addDeleteAddBookedPositionsOne(final OClusterPage clusterPage) {
@@ -271,7 +277,7 @@ public class ClusterPageTest {
 
   @Test
   public void testAddDeleteAddBookedPositionsTwo() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -289,6 +295,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void addDeleteAddBookedPositionsTwo(final OClusterPage clusterPage) {
@@ -335,7 +343,7 @@ public class ClusterPageTest {
 
   @Test
   public void testAddDeleteAddBookedPositionsThree() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -353,6 +361,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void addDeleteAddBookedPositionsThree(final OClusterPage clusterPage) {
@@ -399,7 +409,7 @@ public class ClusterPageTest {
 
   @Test
   public void testDeleteAddLowerVersion() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -418,6 +428,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void deleteAddLowerVersion(OClusterPage localPage) {
@@ -451,7 +463,7 @@ public class ClusterPageTest {
 
   @Test
   public void testDeleteAddLowerVersionNFL() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -470,6 +482,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void deleteAddLowerVersionNFL(OClusterPage localPage) {
@@ -503,7 +517,7 @@ public class ClusterPageTest {
 
   @Test
   public void testDeleteAddBiggerVersion() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -520,6 +534,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void deleteAddBiggerVersion(OClusterPage localPage) {
@@ -556,7 +572,7 @@ public class ClusterPageTest {
 
   @Test
   public void testDeleteAddBiggerVersionNFL() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -573,6 +589,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void deleteAddBiggerVersionNFL(OClusterPage localPage) {
@@ -609,7 +627,7 @@ public class ClusterPageTest {
 
   @Test
   public void testDeleteAddEqualVersion() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -626,6 +644,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void deleteAddEqualVersion(OClusterPage localPage) {
@@ -656,7 +676,7 @@ public class ClusterPageTest {
 
   @Test
   public void testDeleteAddEqualVersionNFL() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -673,6 +693,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void deleteAddEqualVersionNFL(OClusterPage localPage) {
@@ -703,7 +725,7 @@ public class ClusterPageTest {
 
   @Test
   public void testDeleteAddEqualVersionKeepTombstoneVersion() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -720,6 +742,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void deleteAddEqualVersionKeepTombstoneVersion(OClusterPage localPage) {
@@ -750,7 +774,7 @@ public class ClusterPageTest {
 
   @Test
   public void testDeleteTwoOutOfFour() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -767,6 +791,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void deleteTwoOutOfFour(OClusterPage localPage) {
@@ -834,7 +860,7 @@ public class ClusterPageTest {
 
   @Test
   public void testAddFullPageDeleteAndAddAgain() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -851,6 +877,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void addFullPageDeleteAndAddAgain(OClusterPage localPage) {
@@ -915,7 +943,7 @@ public class ClusterPageTest {
 
   @Test
   public void testAddFullPageDeleteAndAddAgainNFL() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -932,6 +960,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void addFullPageDeleteAndAddAgainNFL(OClusterPage localPage) {
@@ -992,7 +1022,7 @@ public class ClusterPageTest {
 
   @Test
   public void testAddBigRecordDeleteAndAddSmallRecords() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -1012,6 +1042,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void addBigRecordDeleteAndAddSmallRecords(long seed, OClusterPage localPage) {
@@ -1065,7 +1097,7 @@ public class ClusterPageTest {
 
   @Test
   public void testFindFirstRecord() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -1085,6 +1117,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void findFirstRecord(long seed, OClusterPage localPage) {
@@ -1145,7 +1179,7 @@ public class ClusterPageTest {
 
   @Test
   public void testFindLastRecord() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -1164,6 +1198,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void findLastRecord(long seed, OClusterPage localPage) {
@@ -1221,7 +1257,7 @@ public class ClusterPageTest {
 
   @Test
   public void testSetGetNextPage() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -1238,6 +1274,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void setGetNextPage(OClusterPage localPage) {
@@ -1247,7 +1285,7 @@ public class ClusterPageTest {
 
   @Test
   public void testSetGetPrevPage() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -1264,6 +1302,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void setGetPrevPage(OClusterPage localPage) {
@@ -1273,7 +1313,7 @@ public class ClusterPageTest {
 
   @Test
   public void testReplaceOneRecordWithEqualSize() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -1290,6 +1330,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void replaceOneRecordWithEqualSize(OClusterPage localPage) {
@@ -1321,7 +1363,7 @@ public class ClusterPageTest {
 
   @Test
   public void testReplaceOneRecordNoVersionUpdate() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -1339,6 +1381,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void replaceOneRecordNoVersionUpdate(OClusterPage localPage) {
@@ -1365,7 +1409,7 @@ public class ClusterPageTest {
 
   @Test
   public void testReplaceOneRecordLowerVersion() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -1382,6 +1426,8 @@ public class ClusterPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+
+    bufferPool.clear();
   }
 
   private void replaceOneRecordLowerVersion(OClusterPage localPage) {

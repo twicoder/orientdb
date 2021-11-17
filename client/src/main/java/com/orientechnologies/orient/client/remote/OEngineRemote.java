@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import java.util.Map;
@@ -44,8 +45,8 @@ public class OEngineRemote extends OEngineAbstract {
   }
 
   @Override
-  public void startup() {
-    super.startup();
+  public void startup(OByteBufferPool bufferPool) {
+    super.startup(bufferPool);
   }
 
   @Override

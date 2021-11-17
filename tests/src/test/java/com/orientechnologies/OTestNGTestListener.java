@@ -19,7 +19,6 @@
 
 package com.orientechnologies;
 
-import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import org.testng.Assert;
@@ -63,8 +62,6 @@ public class OTestNGTestListener implements ISuiteListener {
       if (orient != null) {
         // state is verified during shutdown
         orient.shutdown();
-      } else {
-        OByteBufferPool.instance(null).checkMemoryLeaks();
       }
     }
   }

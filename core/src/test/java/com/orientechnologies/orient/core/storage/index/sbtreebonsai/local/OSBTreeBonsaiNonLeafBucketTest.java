@@ -25,7 +25,7 @@ public class OSBTreeBonsaiNonLeafBucketTest {
 
   @Test
   public void testInitialization() throws Exception {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -49,6 +49,7 @@ public class OSBTreeBonsaiNonLeafBucketTest {
 
     cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
+    bufferPool.clear();
   }
 
   @Test
@@ -64,7 +65,7 @@ public class OSBTreeBonsaiNonLeafBucketTest {
       keys.add(random.nextLong());
     }
 
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -120,6 +121,7 @@ public class OSBTreeBonsaiNonLeafBucketTest {
 
     cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
+    bufferPool.clear();
   }
 
   @Test
@@ -135,7 +137,7 @@ public class OSBTreeBonsaiNonLeafBucketTest {
       keys.add(random.nextLong());
     }
 
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -231,5 +233,7 @@ public class OSBTreeBonsaiNonLeafBucketTest {
 
     cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
+
+    bufferPool.clear();
   }
 }

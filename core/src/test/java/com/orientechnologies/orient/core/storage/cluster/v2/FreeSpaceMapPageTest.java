@@ -17,7 +17,7 @@ public class FreeSpaceMapPageTest {
 
   @Test
   public void findSinglePageSameSpaceEvenIndex() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -33,11 +33,12 @@ public class FreeSpaceMapPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+    bufferPool.clear();
   }
 
   @Test
   public void findSinglePageSameSpaceOddIndex() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -53,11 +54,12 @@ public class FreeSpaceMapPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+    bufferPool.clear();
   }
 
   @Test
   public void findSinglePageLessSpaceEvenIndex() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -73,11 +75,12 @@ public class FreeSpaceMapPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+    bufferPool.clear();
   }
 
   @Test
   public void findSinglePageLessSpaceOddIndex() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -93,11 +96,12 @@ public class FreeSpaceMapPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+    bufferPool.clear();
   }
 
   @Test
   public void findCouplePagesSameSpaceOne() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -114,11 +118,12 @@ public class FreeSpaceMapPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+    bufferPool.clear();
   }
 
   @Test
   public void findCouplePagesSameSpaceTwo() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -135,11 +140,12 @@ public class FreeSpaceMapPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+    bufferPool.clear();
   }
 
   @Test
   public void findCouplePagesSmallerSpaceOne() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -156,11 +162,12 @@ public class FreeSpaceMapPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+    bufferPool.clear();
   }
 
   @Test
   public void findCouplePagesSmallerSpaceTwo() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -177,11 +184,12 @@ public class FreeSpaceMapPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+    bufferPool.clear();
   }
 
   @Test
   public void bigSpaceOne() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -201,11 +209,12 @@ public class FreeSpaceMapPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+    bufferPool.clear();
   }
 
   @Test
   public void bigSpaceTwo() {
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -225,6 +234,7 @@ public class FreeSpaceMapPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+    bufferPool.clear();
   }
 
   @Test
@@ -232,7 +242,7 @@ public class FreeSpaceMapPageTest {
     final int pages = 1_000;
     final int checks = 1_000;
 
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -273,6 +283,7 @@ public class FreeSpaceMapPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+    bufferPool.clear();
   }
 
   @Test
@@ -283,7 +294,7 @@ public class FreeSpaceMapPageTest {
     final int pages = 1_000;
     final int checks = 1_000;
 
-    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
+    OByteBufferPool bufferPool = OByteBufferPool.instance();
     OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
@@ -360,5 +371,6 @@ public class FreeSpaceMapPageTest {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
     }
+    bufferPool.clear();
   }
 }

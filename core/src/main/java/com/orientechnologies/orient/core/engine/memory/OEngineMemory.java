@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.engine.memory;
 
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -32,6 +33,8 @@ import java.util.Map;
 public class OEngineMemory extends OEngineAbstract {
   public static final String NAME = "memory";
 
+  private volatile OByteBufferPool bufferPool;
+
   public OEngineMemory() {}
 
   public OStorage createStorage(
@@ -41,7 +44,7 @@ public class OEngineMemory extends OEngineAbstract {
       long doubleWriteLogMaxSegSize,
       int storageId) {
     try {
-      return new ODirectMemoryStorage(url, url, getMode(configuration), storageId);
+      return new ODirectMemoryStorage(url, url, getMode(configuration), storageId, bufferPool);
     } catch (Exception e) {
       final String message = "Error on opening in memory storage: " + url;
       OLogManager.instance().error(this, message, e);
@@ -60,8 +63,9 @@ public class OEngineMemory extends OEngineAbstract {
   }
 
   @Override
-  public void startup() {
+  public void startup(OByteBufferPool bufferPool) {
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
-    super.startup();
+    super.startup(bufferPool);
+    this.bufferPool = bufferPool;
   }
 }

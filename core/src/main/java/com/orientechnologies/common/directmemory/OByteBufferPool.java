@@ -21,14 +21,12 @@ package com.orientechnologies.common.directmemory;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Object of this class works at the same time as factory for <code>DirectByteBuffer</code> objects
@@ -43,36 +41,13 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
   private static final boolean TRACK =
       OGlobalConfiguration.DIRECT_MEMORY_TRACK_MODE.getValueAsBoolean();
 
-  /**
-   * Holder for singleton instance. We use {@link AtomicReference} instead of static constructor to
-   * avoid throwing of exceptions in static initializers.
-   */
-  private static final AtomicReference<OByteBufferPool> INSTANCE_HOLDER = new AtomicReference<>();
-
   /** Limit of direct memory pointers are hold inside of the pool */
   private final int poolSize;
 
   /** @return Singleton instance */
-  public static OByteBufferPool instance(OContextConfiguration contextConfiguration) {
-    final OByteBufferPool instance = INSTANCE_HOLDER.get();
-    if (instance != null) {
-      return instance;
-    }
-
-    int bufferSize;
-    if (contextConfiguration != null) {
-      bufferSize =
-          contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE);
-    } else {
-      bufferSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger();
-    }
-
-    final OByteBufferPool newInstance = new OByteBufferPool(bufferSize * 1024);
-    if (INSTANCE_HOLDER.compareAndSet(null, newInstance)) {
-      return newInstance;
-    }
-
-    return INSTANCE_HOLDER.get();
+  public static OByteBufferPool instance() {
+    final int bufferSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger();
+    return new OByteBufferPool(bufferSize * 1024);
   }
 
   /** Size of single page in bytes. */

@@ -68,7 +68,7 @@ public class OJUnitTestListener extends RunListener {
         // state is verified during engine shutdown
         orient.shutdown();
       } else {
-        OByteBufferPool.instance(null).checkMemoryLeaks();
+        OByteBufferPool.instance().checkMemoryLeaks();
       }
     }
   }

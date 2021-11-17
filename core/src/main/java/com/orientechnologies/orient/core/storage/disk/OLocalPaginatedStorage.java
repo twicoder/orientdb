@@ -155,17 +155,21 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   protected volatile byte[] iv;
 
+  private final OByteBufferPool bufferPool;
+
   public OLocalPaginatedStorage(
       final String name,
       final String filePath,
       final String mode,
       final int id,
       final OReadCache readCache,
+      final OByteBufferPool bufferPool,
       final OClosableLinkedContainer<Long, OFile> files,
       final long walMaxSegSize,
       long doubleWriteLogMaxSegSize) {
     super(name, filePath, mode, id);
 
+    this.bufferPool = bufferPool;
     this.walMaxSegSize = walMaxSegSize;
     this.files = files;
     this.doubleWriteLogMaxSegSize = doubleWriteLogMaxSegSize;
@@ -805,7 +809,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     final OWOWCache wowCache =
         new OWOWCache(
             pageSize,
-            OByteBufferPool.instance(null),
+            bufferPool,
             writeAheadLog,
             doubleWriteLog,
             contextConfiguration.getValueAsInteger(

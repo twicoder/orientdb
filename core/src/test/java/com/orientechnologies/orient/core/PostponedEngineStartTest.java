@@ -19,6 +19,7 @@
 
 package com.orientechnologies.orient.core;
 
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -670,8 +671,8 @@ public class PostponedEngineStartTest {
     }
 
     @Override
-    public void startup() {
-      super.startup();
+    public void startup(OByteBufferPool bufferPool) {
+      super.startup(bufferPool);
       throw new RuntimeException("oops");
     }
 

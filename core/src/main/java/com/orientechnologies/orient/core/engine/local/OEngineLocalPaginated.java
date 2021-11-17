@@ -55,6 +55,8 @@ public class OEngineLocalPaginated extends OEngineAbstract {
   protected final OClosableLinkedContainer<Long, OFile> files =
       new OClosableLinkedContainer<>(getOpenFilesLimit());
 
+  private volatile OByteBufferPool bufferPool;
+
   public OEngineLocalPaginated() {}
 
   private static int getOpenFilesLimit() {
@@ -74,7 +76,7 @@ public class OEngineLocalPaginated extends OEngineAbstract {
   }
 
   @Override
-  public void startup() {
+  public void startup(final OByteBufferPool bufferPool) {
     final String userName = System.getProperty("user.name", "unknown");
     OLogManager.instance()
         .infoNoDb(this, "System is started under an effective user : `%s`", userName);
@@ -88,32 +90,33 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     }
 
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
-    super.startup();
+    super.startup(bufferPool);
 
     final long diskCacheSize =
         calculateReadCacheMaxMemory(
             OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024);
     final int pageSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
+    this.bufferPool = bufferPool;
+
     if (OGlobalConfiguration.DIRECT_MEMORY_PREALLOCATE.getValueAsBoolean()) {
       final int pageCount = (int) (diskCacheSize / pageSize);
       OLogManager.instance().info(this, "Allocation of " + pageCount + " pages.");
 
-      final OByteBufferPool bufferPool = OByteBufferPool.instance(null);
       final List<OPointer> pages = new ArrayList<>(pageCount);
 
       for (int i = 0; i < pageCount; i++) {
-        pages.add(bufferPool.acquireDirect(false, Intention.PAGE_PRE_ALLOCATION));
+        pages.add(this.bufferPool.acquireDirect(false, Intention.PAGE_PRE_ALLOCATION));
       }
 
       for (final OPointer pointer : pages) {
-        bufferPool.release(pointer);
+        this.bufferPool.release(pointer);
       }
 
       pages.clear();
     }
 
-    readCache = new AsyncReadCache(OByteBufferPool.instance(null), diskCacheSize, pageSize, false);
+    readCache = new AsyncReadCache(this.bufferPool, diskCacheSize, pageSize, false);
   }
 
   private static long calculateReadCacheMaxMemory(final long cacheSize) {
@@ -147,6 +150,7 @@ public class OEngineLocalPaginated extends OEngineAbstract {
           getMode(configuration),
           storageId,
           readCache,
+          bufferPool,
           files,
           maxWalSegSize,
           doubleWriteLogMaxSegSize);
