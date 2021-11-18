@@ -8,8 +8,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

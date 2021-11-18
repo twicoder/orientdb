@@ -156,7 +156,7 @@ public class ORidSetTest extends OParserTestAbstract {
       Assert.assertTrue(iterator.hasNext());
       ORID next = iterator.next();
       Assert.assertNotNull(next);
-      control.remove(next);
+      Assert.assertTrue(control.remove(next));
     }
 
     Assert.assertFalse(iterator.hasNext());

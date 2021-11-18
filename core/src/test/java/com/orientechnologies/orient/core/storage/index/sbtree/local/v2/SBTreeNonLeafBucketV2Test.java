@@ -46,6 +46,7 @@ public class SBTreeNonLeafBucketV2Test {
 
     cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
+    bufferPool.clear();
   }
 
   @Test
@@ -117,6 +118,7 @@ public class SBTreeNonLeafBucketV2Test {
 
     cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
+    bufferPool.clear();
   }
 
   @Test
@@ -221,5 +223,6 @@ public class SBTreeNonLeafBucketV2Test {
 
     cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
+    bufferPool.clear();
   }
 }

@@ -261,6 +261,10 @@ public class Orient extends OListenerManger<OOrientListener> {
         return this;
       }
 
+      if (byteBufferPool != null) {
+        byteBufferPool.clear();
+      }
+
       byteBufferPool = OByteBufferPool.instance();
       if (timer == null) timer = new Timer(true);
 

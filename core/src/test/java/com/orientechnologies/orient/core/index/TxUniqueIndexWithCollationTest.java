@@ -24,10 +24,8 @@ import static org.junit.Assert.assertEquals;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -105,7 +103,6 @@ public class TxUniqueIndexWithCollationTest {
 
     final OResultSet r =
         db.query("select * from user where name in ['Abc', 'Abd', 'Abz'] order by name");
-
 
     assertEquals("abc", r.next().toElement().getProperty("name"));
     assertEquals("abd", r.next().toElement().getProperty("name"));

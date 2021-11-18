@@ -65,6 +65,7 @@ public class FetchFromBinaryIndexStep extends AbstractExecutionStep {
   private boolean inited = false;
   private Stream<ORawPair<byte[], ORID>> stream;
   private Iterator<ORawPair<byte[], ORID>> indexIterator;
+  private final ORidSet processedRecords = new ORidSet();
 
   private final List<Stream<ORawPair<byte[], ORID>>> nextStreams = new ArrayList<>();
 
@@ -193,36 +194,46 @@ public class FetchFromBinaryIndexStep extends AbstractExecutionStep {
 
   private void fetchNextEntry() {
     nextEntry = null;
-    if (stream != null) {
-      while (!indexIterator.hasNext()) {
-        if (!nextStreams.isEmpty()) {
-          stream = nextStreams.remove(0);
-          storeAcquiredStream(stream);
-          cursorToIterator();
-        } else {
-          stream = null;
-          indexIterator = null;
-          break;
+    while (true) {
+      if (stream != null) {
+        while (!indexIterator.hasNext()) {
+          if (!nextStreams.isEmpty()) {
+            stream = nextStreams.remove(0);
+            storeAcquiredStream(stream);
+            cursorToIterator();
+          } else {
+            stream = null;
+            indexIterator = null;
+            break;
+          }
+        }
+
+        if (indexIterator != null) {
+          nextEntry = indexIterator.next();
         }
       }
-
-      if (indexIterator != null) {
-        nextEntry = indexIterator.next();
+      if (nextEntry == null && customIterator != null && customIterator.hasNext()) {
+        final Map.Entry<byte[], OIdentifiable> entry = customIterator.next();
+        nextEntry = new ORawPair<>(entry.getKey(), entry.getValue().getIdentity());
       }
-    }
-    if (nextEntry == null && customIterator != null && customIterator.hasNext()) {
-      final Map.Entry<byte[], OIdentifiable> entry = customIterator.next();
-      nextEntry = new ORawPair<>(entry.getKey(), entry.getValue().getIdentity());
-    }
 
-    if (nextEntry == null && nullKeyIterator != null && nullKeyIterator.hasNext()) {
-      OIdentifiable nextValue = (OIdentifiable) nullKeyIterator.next();
-      nextEntry = new ORawPair<>(null, nextValue.getIdentity());
-    }
-    if (nextEntry == null) {
-      updateIndexStats();
-    } else {
-      count++;
+      if (nextEntry == null && nullKeyIterator != null && nullKeyIterator.hasNext()) {
+        OIdentifiable nextValue = (OIdentifiable) nullKeyIterator.next();
+        nextEntry = new ORawPair<>(null, nextValue.getIdentity());
+      }
+
+      if (nextEntry == null) {
+        updateIndexStats();
+        break;
+      } else {
+        count++;
+      }
+
+      if (processedRecords.add(nextEntry.second)) {
+        break;
+      } else {
+        nextEntry = null;
+      }
     }
   }
 
