@@ -980,16 +980,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           new OSQLCommandTaskFirstPhase(command, beforeId.get(), afterId.get());
       ODistributedServerManager dManager = getDistributedManager();
       Set<String> nodes = dManager.getAvailableNodeNames(getName());
-      nodes.remove(getLocalNodeName());
       long next = dManager.getNextMessageIdCounter();
-      OTransactionResultPayload localResult =
-          firstPhaseDDL(
-              command,
-              beforeId.get(),
-              afterId.get(),
-              new ODistributedRequestId(dManager.getLocalNodeId(), next));
 
-      ONewDistributedResponseManager responseManager = sendTask(nodes, task, localResult, next);
+      ODistributedRequestId reqId = new ODistributedRequestId(dManager.getLocalNodeId(), next);
+      ONewDistributedResponseManager responseManager = sendTask(nodes, task, null, next);
 
       if (responseManager.isQuorumReached()) {
         List<OTransactionResultPayload> results =
@@ -999,14 +993,14 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         switch (resultPayload.getResponseType()) {
           case OTxSuccess.ID:
             // Success send ok
-            confirmPhase2DDL(nodes, responseManager.getMessageId(), true);
+            confirmPhase2DDL(nodes, reqId, true);
             return;
           case OTxException.ID:
             // Exception send ko and throws the exception
-            confirmPhase2DDL(nodes, responseManager.getMessageId(), false);
+            confirmPhase2DDL(nodes, reqId, false);
             throw ((OTxException) resultPayload).getException();
           case OTxInvalidSequential.ID:
-            confirmPhase2DDL(nodes, responseManager.getMessageId(), false);
+            confirmPhase2DDL(nodes, reqId, false);
             continue retry;
         }
 
@@ -1037,19 +1031,17 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                       ((OTxException) result).getException().getMessage()));
               break;
             case OTxInvalidSequential.ID:
-              confirmPhase2DDL(nodes, responseManager.getMessageId(), false);
+              confirmPhase2DDL(nodes, reqId, false);
               continue retry;
           }
         }
-        confirmPhase2DDL(nodes, responseManager.getMessageId(), false);
+        confirmPhase2DDL(nodes, reqId, false);
 
         ODistributedOperationException ex =
             new ODistributedOperationException(
                 String.format(
                     "Request `%s` didn't reach the quorum of '%d', responses: [%s]",
-                    responseManager.getMessageId(),
-                    responseManager.getQuorum(),
-                    String.join(",", messages)));
+                    reqId, responseManager.getQuorum(), String.join(",", messages)));
         for (Exception e : exceptions) {
           ex.addSuppressed(e);
         }
@@ -1058,6 +1050,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
     }
+    throw new ODistributedOperationException("Reached number of retry to execute ddl");
   }
 
   private void confirmPhase2DDL(Set<String> nodes, ODistributedRequestId messageId, boolean apply) {
@@ -1069,7 +1062,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         new OSQLCommandTaskSecondPhase(messageId, apply),
         dManager.getNextMessageIdCounter(),
         EXECUTION_MODE.RESPONSE,
-        "OK");
+        null);
   }
 
   private ONewDistributedResponseManager sendTask(
