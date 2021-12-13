@@ -601,7 +601,7 @@ public final class BinaryBTree extends ODurableComponent {
 
         boolean keyFound = false;
         for (int k = 0; k < commonLen; k++) {
-          if (keyOne[k + keyOneOffset] < keyTwo[k]) {
+          if ((0xFF & (keyOne[k + keyOneOffset])) < (0xFF & keyTwo[k])) {
             if (minLen > k + 1) {
               minLen = k + 1;
               minIndex = index;

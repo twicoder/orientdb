@@ -162,6 +162,17 @@ public class OCompositeKey
         return -1;
       }
 
+      // null items treated as to be bigger than non-null items
+      if (inKey == null) {
+        if (outKey == null) {
+          return 0;
+        } else {
+          return 1;
+        }
+      } else if (outKey == null) {
+        return -1;
+      }
+
       final int result = comparator.compare(inKey, outKey);
       if (result != 0) {
         return result;

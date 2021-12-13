@@ -263,10 +263,13 @@ public class AtomicOperationsTable {
     private final long segment;
     private final long operationId;
 
+    private final StackTraceElement[] stackTraceElements;
+
     private OperationInformation(AtomicOperationStatus status, long segment, long operationId) {
       this.status = status;
       this.segment = segment;
       this.operationId = operationId;
+      this.stackTraceElements = Thread.currentThread().getStackTrace();
     }
   }
 }
