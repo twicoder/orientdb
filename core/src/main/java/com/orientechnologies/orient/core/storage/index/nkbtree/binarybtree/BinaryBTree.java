@@ -591,7 +591,7 @@ public final class BinaryBTree extends ODurableComponent {
           keyOneOffset = bucketPrefix.length;
         } else {
           keyOne = bucketToSplit.getKey(index - 1);
-          keyOneLen = key.length;
+          keyOneLen = keyOne.length;
           keyOneOffset = 0;
         }
 
@@ -613,7 +613,7 @@ public final class BinaryBTree extends ODurableComponent {
         }
 
         if (!keyFound && minLen > commonLen + 1) {
-          assert keyOneLen > keyTwo.length;
+          assert keyOneLen < keyTwo.length;
 
           minLen = commonLen + 1;
           minIndex = index;
