@@ -174,6 +174,10 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     return readCache;
   }
 
+  public OByteBufferPool getBufferPool() {
+    return bufferPool;
+  }
+
   @Override
   public String getNameFromPath(String dbPath) {
     return OIOUtils.getRelativePathIfAny(dbPath, null);
