@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
@@ -252,6 +253,18 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
             ORID value = rid;
 
             if (key != null) {
+              OLogManager.instance()
+                  .infoNoDb(
+                      this,
+                      "[oplog,"
+                          + getFullName()
+                          + ",update,"
+                          + key
+                          + ","
+                          + rid
+                          + ","
+                          + atomicOperation.getOperationUnitId()
+                          + "]");
               key = keySerializer.preprocess(key, (Object[]) keyTypes);
               final byte[] serializedKey =
                   keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes);
@@ -496,6 +509,16 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
           try {
             if (key != null) {
               final ORID removedValue;
+              OLogManager.instance()
+                  .infoNoDb(
+                      this,
+                      "[oplog,"
+                          + getFullName()
+                          + ",deletion,"
+                          + key
+                          + ","
+                          + atomicOperation.getOperationUnitId()
+                          + "]");
 
               final Optional<RemoveSearchResult> bucketSearchResult =
                   findBucketForRemove(key, atomicOperation);
