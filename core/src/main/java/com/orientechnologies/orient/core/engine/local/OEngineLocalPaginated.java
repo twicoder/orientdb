@@ -55,7 +55,7 @@ public class OEngineLocalPaginated extends OEngineAbstract {
   protected final OClosableLinkedContainer<Long, OFile> files =
       new OClosableLinkedContainer<>(getOpenFilesLimit());
 
-  private volatile OByteBufferPool bufferPool;
+  protected volatile OByteBufferPool bufferPool;
 
   public OEngineLocalPaginated() {}
 
